@@ -1,0 +1,16 @@
+{
+  "body": [
+    "DialogQCA is a desktop interface for Qualitative Comparative Analysis built on top of R and the QCA package.",
+    "It brings the main QCA workflow into a guided graphical environment, so researchers can move from data preparation to truth tables, minimization, calibration, and interpretation without leaving the application."
+  ],
+  "highlights": [
+    "Connects directly to the R runtime and the QCA package.",
+    "Provides dialog-driven workflows for common comparative set-analysis tasks.",
+    "Keeps methods accessible while remaining close to the underlying analytical tools."
+  ],
+  "authorLabel": "Author:",
+  "authorName": "Adrian Dușa",
+  "authorUrl": "https://adriandusa.com",
+  "copyrightHolder": "Adrian Dușa",
+  "copyrightStartYear": 2025
+}

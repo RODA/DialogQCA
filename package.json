@@ -1,0 +1,10 @@
+{
+    "private": true,
+    "scripts": {
+        "check": "node scripts/check-product.js"
+    },
+    "devDependencies": {},
+    "name": "dialogqca",
+    "version": "1.0.13",
+    "description": "DialogQCA product contribution for DialogForge."
+}

@@ -1,0 +1,25 @@
+[
+    {
+        "id": "qca-packages",
+        "label": "Check QCA runtime packages",
+        "owner": "products/DialogQCA",
+        "status": "implemented",
+        "requiredRuntime": ["dependencies.packages"],
+        "rPackages": ["httpgd", "QCA"],
+        "commands": [
+            {
+                "text": "library(QCA)",
+                "visibility": "visible"
+            }
+        ],
+        "replacement": "Verify QCA package availability through provider-neutral dependency checks."
+    },
+    {
+        "id": "qca-workspace",
+        "label": "Prepare QCA workspace state",
+        "owner": "products/DialogQCA",
+        "status": "implemented",
+        "requiredRuntime": ["workspace.objects"],
+        "replacement": "Initialize QCA-specific workspace affordances after runtime startup."
+    }
+]

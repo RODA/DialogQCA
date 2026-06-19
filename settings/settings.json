@@ -1,0 +1,70 @@
+{
+  "dependencies": [
+    "httpgd",
+    "QCA"
+  ],
+  "uiActionCommandVisibility": "hidden",
+  "runtimeStartup": {
+    "providerId": "r",
+    "autoStart": true,
+    "processLifecycle": true,
+    "restoreWorkspaceOnStart": true
+  },
+  "packageSources": {
+    "cran": [
+      "httpgd",
+      "jsonlite",
+      "askpass",
+      "later",
+      "digest",
+      "statistics"
+    ],
+    "runiverse": [
+      "admisc",
+      "declared",
+      "venn"
+    ],
+    "both": [
+      "DDIwR",
+      "QCA"
+    ]
+  },
+  "dialogRuntimeRequirements": {
+    "recode": {
+      "rPackages": [
+        "admisc"
+      ]
+    },
+    "calibrate": {
+      "rPackages": [
+        "QCA"
+      ]
+    },
+    "minimize": {
+      "rPackages": [
+        "QCA"
+      ]
+    },
+    "xyplot": {
+      "rPackages": [
+        "QCA"
+      ]
+    },
+    "venn": {
+      "rPackages": [
+        "QCA",
+        "venn"
+      ]
+    },
+    "truthTable": {
+      "rPackages": [
+        "QCA"
+      ]
+    },
+    "incoherent": {
+      "rPackages": [
+        "QCA"
+      ]
+    }
+  }
+}

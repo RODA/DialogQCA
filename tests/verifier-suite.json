@@ -1,0 +1,24 @@
+{
+    "verifierFiles": [
+        "tests/contracts/verify-DialogQCA-assets.js",
+        "tests/contracts/verify-DialogQCA-dialog-sources.js",
+        "tests/contracts/verify-DialogQCA-i18n.js",
+        "tests/dialog-runtime/verify-DialogQCA-recode-dialog.js",
+        "tests/dialog-runtime/verify-DialogQCA-truthTable-dialog.js",
+        "tests/dialog-runtime/verify-DialogQCA-minimize-dialog.js",
+        "tests/dialog-runtime/verify-DialogQCA-xyplot-dialog.js",
+        "tests/dialog-runtime/verify-DialogQCA-calibrate-dialog.js",
+        "tests/dialog-runtime/verify-DialogQCA-venn-dialog.js",
+        "tests/dialog-runtime/verify-DialogQCA-incoherent-dialog.js",
+        "tests/dialog-runtime/verify-DialogQCA-external-call-coverage.js",
+        "tests/dialog-runtime/verify-DialogQCA-customjs-compatibility.js",
+        "tests/products/verify-DialogQCA-bindings.js",
+        "tests/products/verify-DialogQCA-external-calls.js",
+        "tests/products/verify-DialogQCA-venn.js",
+        "tests/products/verify-DialogQCA-calibrate.js",
+        "tests/products/verify-DialogQCA-xyplot.js",
+        "tests/products/verify-DialogQCA-xyplot-renderer.js",
+        "tests/products/verify-DialogQCA-control-adapters.js",
+        "tests/products/verify-DialogQCA-runtime-adapter.js"
+    ]
+}

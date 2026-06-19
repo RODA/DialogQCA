@@ -1,0 +1,13 @@
+{
+    "id": "DialogQCA",
+    "name": "DialogQCA",
+    "appId": "org.roda.dialogqca",
+    "version": "1.0.13",
+    "defaultRuntimeProvider": "r",
+    "runtimeProviders": [
+        "r"
+    ],
+    "i18n": "i18n",
+    "menu": "menu",
+    "dialogs": "dialogs"
+}

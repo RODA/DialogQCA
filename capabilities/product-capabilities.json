@@ -1,0 +1,112 @@
+[
+    {
+        "capability": "qca.dialog.calibrate",
+        "label": "Calibrate dialog",
+        "requiredRuntime": [
+            "commands.visible",
+            "commands.invisible",
+            "workspace.activeDataset",
+            "tabular.schema",
+            "tabular.read",
+            "dependencies.packages"
+        ],
+        "rPackages": ["QCA"]
+    },
+    {
+        "capability": "qca.dialog.recode",
+        "label": "Recode conditions dialog",
+        "requiredRuntime": [
+            "commands.visible",
+            "commands.invisible",
+            "workspace.activeDataset",
+            "tabular.schema",
+            "tabular.read",
+            "dependencies.packages"
+        ],
+        "rPackages": ["admisc"]
+    },
+    {
+        "capability": "qca.dialog.truthTable",
+        "label": "Truth table dialog",
+        "requiredRuntime": [
+            "commands.visible",
+            "commands.invisible",
+            "workspace.activeDataset",
+            "tabular.schema",
+            "tabular.read",
+            "dependencies.packages"
+        ],
+        "rPackages": ["QCA"]
+    },
+    {
+        "capability": "qca.dialog.incoherent",
+        "label": "Incoherent configurations dialog",
+        "requiredRuntime": [
+            "commands.visible",
+            "commands.invisible",
+            "workspace.activeDataset",
+            "tabular.schema",
+            "tabular.read",
+            "dependencies.packages"
+        ],
+        "rPackages": ["QCA"]
+    },
+    {
+        "capability": "qca.dialog.minimize",
+        "label": "Minimize dialog",
+        "requiredRuntime": [
+            "commands.visible",
+            "commands.invisible",
+            "workspace.objects",
+            "workspace.activeDataset",
+            "tabular.schema",
+            "tabular.read",
+            "dependencies.packages"
+        ],
+        "rPackages": ["QCA"]
+    },
+    {
+        "capability": "qca.dialog.xyplot",
+        "label": "XY plot dialog",
+        "requiredRuntime": [
+            "commands.visible",
+            "commands.invisible",
+            "workspace.activeDataset",
+            "tabular.schema",
+            "tabular.read",
+            "dependencies.packages"
+        ],
+        "rPackages": ["QCA"]
+    },
+    {
+        "capability": "qca.dialog.venn",
+        "label": "Venn diagram dialog",
+        "requiredRuntime": [
+            "commands.visible",
+            "commands.invisible",
+            "workspace.objects",
+            "workspace.activeDataset",
+            "tabular.schema",
+            "tabular.read",
+            "dependencies.packages"
+        ],
+        "rPackages": ["QCA", "venn"]
+    },
+    {
+        "capability": "qca.packages.required",
+        "label": "Required QCA package management",
+        "requiredRuntime": ["commands.visible", "dependencies.packages"],
+        "rPackages": [
+            "httpgd",
+            "jsonlite",
+            "askpass",
+            "later",
+            "digest",
+            "admisc",
+            "declared",
+            "DDIwR",
+            "QCA",
+            "venn"
+        ]
+    }
+]
