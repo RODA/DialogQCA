@@ -1,7 +1,8 @@
 {
     "private": true,
     "scripts": {
-        "check": "node scripts/check-product.js"
+        "check": "node scripts/check-product.js",
+        "verify:electron-dialog": "node tests/electron/verify-DialogQCA-dialog-window.js"
     },
     "devDependencies": {},
     "name": "dialogqca",
