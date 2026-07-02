@@ -3,7 +3,7 @@
     "name": "DialogQCA",
     "description": "A graphical user interface for the QCA package in R.",
     "appId": "org.roda.dialogqca",
-    "version": "1.0.14",
+    "version": "1.0.15",
     "defaultRuntimeProvider": "r",
     "runtimeProviders": [
         "r"
