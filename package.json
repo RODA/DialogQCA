@@ -4,7 +4,9 @@
         "check": "node scripts/check-product.js",
         "verify:electron-dialog": "node tests/electron/verify-DialogQCA-dialog-window.js"
     },
-    "devDependencies": {},
+    "devDependencies": {
+        "@dialogforge/core": "file:../DialogForge/dist/sdk/core"
+    },
     "name": "dialogqca",
     "version": "1.0.13",
     "description": "A graphical user interface for the QCA package in R."

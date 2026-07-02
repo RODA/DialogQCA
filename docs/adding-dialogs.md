@@ -201,6 +201,119 @@ If new shared DialogQCA dialog behavior is needed, add it as a product-owned
 helper and test it. Promote code to DialogForge shared code only when it is
 truly reusable outside DialogQCA.
 
+## Editor Help For `dialog.json`
+
+DialogCreator is the preferred place to design and edit dialogs. If you inspect
+or adjust a `dialog.json` file in VS Code, attach DialogForge's schema so the
+editor can show field names, descriptions, and basic mistakes while you type.
+
+For a DialogQCA checkout next to DialogForge, add this to `.vscode/settings.json`:
+
+```json
+{
+    "json.schemas": [
+        {
+            "fileMatch": ["dialogs/**/dialog.json"],
+            "url": "../DialogForge/schemas/dialog.schema.json"
+        }
+    ]
+}
+```
+
+If your folders are arranged differently, keep `fileMatch` the same and adjust
+only the `url` so it points to DialogForge's `schemas/dialog.schema.json`.
+
+DialogQCA still validates registered dialog files during `npm run check` and
+when DialogForge stages the product.
+
+## When You Need The DialogForge SDK
+
+Most DialogQCA dialog authors do not need the SDK. If you are adding a dialog,
+editing dialog labels, changing menu placement, or declaring package
+prerequisites, stay in the dialog, menu, capability, and locale files described
+above.
+
+Use the SDK only when you edit DialogQCA's product wiring, especially:
+
+- `bootstrap/productContribution.ts`;
+- QCA-specific external calls;
+- product-level runtime method calls;
+- product-level console state chips, if DialogQCA adds them later.
+
+The SDK gives TypeScript and editors the public DialogForge product contract.
+It keeps DialogQCA code away from DialogForge private `shared/` implementation
+files.
+
+From the DialogForge repository, build or refresh the SDK:
+
+```sh
+npm run sdk:core
+```
+
+This creates the local package:
+
+```text
+DialogForge/dist/sdk/core
+```
+
+DialogQCA's `package.json` should point `@dialogforge/core` at that local
+package:
+
+```json
+{
+    "devDependencies": {
+        "@dialogforge/core": "file:../DialogForge/dist/sdk/core"
+    }
+}
+```
+
+If your folders are not siblings, adjust the relative path so it points to the
+same `dist/sdk/core` directory.
+
+After changing or refreshing that dependency, run this from the DialogQCA
+repository:
+
+```sh
+npm install
+```
+
+Then `bootstrap/productContribution.ts` can import the public SDK:
+
+```ts
+import {
+    PRODUCT_CONTRIBUTION_CONTRACT_VERSION,
+    type ProductContribution
+} from "@dialogforge/core";
+
+export const productContribution: ProductContribution = {
+    id: "DialogQCA",
+    dialogForgeProductContract: PRODUCT_CONTRIBUTION_CONTRACT_VERSION,
+    createDialogExternalCallHosts: function(context) {
+        return {
+            qca: createQcaExternalCallHostForSession({
+                executeRuntimeMethod: context.executeRuntimeMethod
+            }, "DialogQCA.dialog")
+        };
+    }
+};
+```
+
+When the contribution changes, check it from DialogQCA:
+
+```sh
+npm run check
+```
+
+Then start DialogForge with DialogQCA selected:
+
+```sh
+npm run dev:product -- /path/to/DialogQCA
+```
+
+For agents: use `@dialogforge/core` for product contribution types and the
+contract version. Do not reintroduce imports from DialogForge private `shared/`
+paths for this product boundary.
+
 ## Menu Customization In Development
 
 When DialogForge is started with this repository selected, menu customization's

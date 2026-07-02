@@ -1,14 +1,17 @@
 import {
     createQcaExternalCallHostForSession
 } from "../qca/qcaExternalCallHost";
-import type {
-    ProductContribution
-} from "dialogforge/shared/core/contracts/productContribution";
+import {
+    PRODUCT_CONTRIBUTION_CONTRACT_VERSION,
+    type ProductContribution
+} from "@dialogforge/core";
 
 
 export const productContribution:
     ProductContribution = {
         id: "DialogQCA",
+        dialogForgeProductContract:
+            PRODUCT_CONTRIBUTION_CONTRACT_VERSION,
         createDialogExternalCallHosts: function(context) {
             return {
                 qca: createQcaExternalCallHostForSession({

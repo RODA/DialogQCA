@@ -8,16 +8,6 @@ declare namespace Monaco {
     }
 }
 
-declare module "dialogforge/shared/core/contracts/productContribution" {
-    export interface ProductContributionContext {
-        executeRuntimeMethod(request: unknown): Promise<any>;
-    }
-    export interface ProductContribution {
-        id: string;
-        createDialogExternalCallHosts(context: ProductContributionContext): Record<string, unknown>;
-    }
-}
-
 declare module "dialogforge/shared/dialog-runtime/productDialogPreviewExtension" {
     export interface ProductDialogPreviewExtension {
         applyExternalCallResult?(context: any): unknown;
