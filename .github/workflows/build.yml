@@ -29,6 +29,8 @@ jobs:
     steps:
       - name: Check out product
         uses: actions/checkout@v5
+        with:
+          path: product
 
       - name: Check out DialogForge
         uses: actions/checkout@v5
@@ -49,6 +51,7 @@ jobs:
         run: npm ci
 
       - name: Build Linux artifact
+        working-directory: product
         run: npm run build:linux
 
       - name: Upload Linux artifact
@@ -64,6 +67,8 @@ jobs:
     steps:
       - name: Check out product
         uses: actions/checkout@v5
+        with:
+          path: product
 
       - name: Check out DialogForge
         uses: actions/checkout@v5
@@ -84,6 +89,7 @@ jobs:
         run: npm ci
 
       - name: Build Windows artifact
+        working-directory: product
         run: npm run build:windows
 
       - name: Upload Windows artifacts
@@ -99,6 +105,8 @@ jobs:
     steps:
       - name: Check out product
         uses: actions/checkout@v5
+        with:
+          path: product
 
       - name: Check out DialogForge
         uses: actions/checkout@v5
@@ -119,6 +127,7 @@ jobs:
         run: npm ci
 
       - name: Build macOS artifact
+        working-directory: product
         run: npm run build:macos -- --arch x64
 
       - name: Upload macOS artifact

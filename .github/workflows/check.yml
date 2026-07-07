@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Check out product
         uses: actions/checkout@v5
+        with:
+          path: product
 
       - name: Check out DialogForge
         uses: actions/checkout@v5
@@ -31,4 +33,5 @@ jobs:
         run: npm ci
 
       - name: Check product contribution
+        working-directory: product
         run: npm run check
