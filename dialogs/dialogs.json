@@ -1,0 +1,72 @@
+[
+    {
+        "id": "calibrate",
+        "label": "Calibrate",
+        "owner": "products/DialogQCA",
+        "targetHome": "products/DialogQCA/dialogs/source/calibrate/",
+        "sourceReference": "/Users/dusadrian/Documents/GitHub/DialogQCA/profile/dialogs/calibrate.json",
+        "sourceFile": "source/calibrate/dialog.json",
+        "status": "source-imported",
+        "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime."
+    },
+    {
+        "id": "recode",
+        "label": "Recode conditions",
+        "owner": "products/DialogQCA",
+        "targetHome": "products/DialogQCA/dialogs/source/recode/",
+        "sourceReference": "/Users/dusadrian/Documents/GitHub/DialogQCA/profile/dialogs/recode.json",
+        "sourceFile": "source/recode/dialog.json",
+        "status": "source-imported",
+        "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime."
+    },
+    {
+        "id": "truthTable",
+        "label": "Truth table",
+        "owner": "products/DialogQCA",
+        "targetHome": "products/DialogQCA/dialogs/source/truthTable/",
+        "sourceReference": "/Users/dusadrian/Documents/GitHub/DialogQCA/profile/dialogs/truthTable.json",
+        "sourceFile": "source/truthTable/dialog.json",
+        "status": "source-imported",
+        "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime."
+    },
+    {
+        "id": "incoherent",
+        "label": "Incoherent configurations",
+        "owner": "products/DialogQCA",
+        "targetHome": "products/DialogQCA/dialogs/source/incoherent/",
+        "sourceReference": "/Users/dusadrian/Documents/GitHub/DialogQCA/profile/dialogs/incoherent.json",
+        "sourceFile": "source/incoherent/dialog.json",
+        "status": "source-imported",
+        "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime."
+    },
+    {
+        "id": "minimize",
+        "label": "Minimize",
+        "owner": "products/DialogQCA",
+        "targetHome": "products/DialogQCA/dialogs/source/minimize/",
+        "sourceReference": "/Users/dusadrian/Documents/GitHub/DialogQCA/profile/dialogs/minimize.json",
+        "sourceFile": "source/minimize/dialog.json",
+        "status": "source-imported",
+        "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime."
+    },
+    {
+        "id": "xyplot",
+        "label": "XY plot",
+        "owner": "products/DialogQCA",
+        "targetHome": "products/DialogQCA/dialogs/source/xyplot/",
+        "sourceReference": "/Users/dusadrian/Documents/GitHub/DialogQCA/profile/dialogs/xyplot.json",
+        "sourceFile": "source/xyplot/dialog.json",
+        "status": "source-imported",
+        "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime."
+    },
+    {
+        "id": "venn",
+        "label": "Venn diagram",
+        "owner": "products/DialogQCA",
+        "targetHome": "products/DialogQCA/dialogs/source/venn/",
+        "sourceReference": "/Users/dusadrian/Documents/GitHub/DialogQCA/profile/dialogs/venn.json",
+        "sourceFile": "source/venn/dialog.json",
+        "status": "source-imported",
+        "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime."
+    }
+]

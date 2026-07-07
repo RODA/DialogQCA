@@ -1,0 +1,35 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "strict": true,
+        "noImplicitAny": false,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "rootDir": ".",
+        "outDir": "dist",
+        "baseUrl": ".",
+        "typeRoots": [
+            "types",
+            "node_modules/@types",
+            "../DialogForge/node_modules/@types",
+            "../node_modules/@types"
+        ],
+        "ignoreDeprecations": "6.0",
+        "types": [
+            "node"
+        ],
+        "noEmitOnError": true
+    },
+    "include": [
+        "types/**/*.d.ts",
+        "bootstrap/**/*.ts",
+        "dialogs/**/*.ts",
+        "dialog-externals/**/*.ts",
+        "dialog-runtime/**/*.ts",
+        "runtime-r/**/*.ts",
+        "qca/**/*.ts"
+    ]
+}

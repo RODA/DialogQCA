@@ -1,0 +1,37 @@
+{
+    "private": true,
+    "scripts": {
+        "check": "node scripts/check-product.js",
+        "build": "node scripts/build-product.js",
+        "build:linux": "node scripts/build-product.js --platform linux",
+        "build:windows": "node scripts/build-product.js --platform windows",
+        "build:macos": "node scripts/build-product.js --platform macos",
+        "check:build-ownership": "node scripts/check-build-ownership.js",
+        "webr:library": "node scripts/download-webr-library.js",
+        "verify:electron-dialog": "node tests/electron/verify-DialogQCA-dialog-window.js",
+        "dev:web": "node scripts/run-dialogforge-web.js --replace-port",
+        "build:web": "node scripts/run-dialogforge-web.js --build-only",
+        "serve:web": "node scripts/run-dialogforge-web.js --no-build --replace-port",
+        "verify:web-deployment": "node scripts/verify-web-deployment.js"
+    },
+    "devDependencies": {
+        "@dialogforge/core": "file:../DialogForge/dist/sdk/core"
+    },
+    "name": "dialogqca",
+    "version": "1.0.16",
+    "description": "A graphical user interface for the QCA package in R.",
+    "product": {
+        "id": "DialogQCA",
+        "name": "DialogQCA",
+        "appId": "org.roda.dialogqca",
+        "defaultRuntimeProvider": "r",
+        "runtimeProviders": [
+            "r",
+            "server-r",
+            "webr"
+        ],
+        "webRPackageLibrary": {
+            "releaseTag": "QCA"
+        }
+    }
+}

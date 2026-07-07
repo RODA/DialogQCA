@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.DS_Store
+tests/
+library/R/library.data.gz
+library/R/library.js.metadata
