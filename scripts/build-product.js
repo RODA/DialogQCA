@@ -6,9 +6,21 @@ const { spawnSync } = require("child_process");
 
 const productRoot = path.resolve(__dirname, "..");
 
-const npmCommand = process.platform === "win32"
-    ? "npm.cmd"
-    : "npm";
+const npmInvocation = function(args) {
+    const npmExecPath = String(process.env.npm_execpath || "").trim();
+
+    if (npmExecPath) {
+        return {
+            command: process.execPath,
+            args: [npmExecPath, ...args]
+        };
+    }
+
+    return {
+        command: process.platform === "win32" ? "npm.cmd" : "npm",
+        args
+    };
+};
 
 const resolveDialogForgeRoot = function() {
     const candidates = [
@@ -33,10 +45,12 @@ const resolveDialogForgeRoot = function() {
 };
 
 const runNpm = function(cwd, args) {
-    const result = spawnSync(npmCommand, args, {
+    const invocation = npmInvocation(args);
+    const result = spawnSync(invocation.command, invocation.args, {
         cwd,
         env: process.env,
-        stdio: "inherit"
+        stdio: "inherit",
+        shell: process.platform === "win32" && invocation.command.endsWith(".cmd")
     });
 
     if (result.error) {

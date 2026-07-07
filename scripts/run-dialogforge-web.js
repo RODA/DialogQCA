@@ -14,11 +14,28 @@ const forwardedArgs = process.argv.slice(2).filter((argument) => {
 });
 const shouldBuild = !process.argv.includes("--no-build");
 
+const npmInvocation = function(args) {
+    const npmExecPath = String(process.env.npm_execpath || "").trim();
+
+    if (npmExecPath) {
+        return {
+            command: process.execPath,
+            args: [npmExecPath, ...args]
+        };
+    }
+
+    return {
+        command: process.platform === "win32" ? "npm.cmd" : "npm",
+        args
+    };
+};
+
 const run = function(command, args, options) {
     const result = spawnSync(command, args, {
         cwd: options.cwd,
         env: options.env || process.env,
-        stdio: "inherit"
+        stdio: "inherit",
+        shell: process.platform === "win32" && command.endsWith(".cmd")
     });
 
     if (result.error) {
@@ -34,17 +51,17 @@ if (!fs.existsSync(path.join(dialogForgeRoot, "package.json"))) {
     throw new Error(`DialogForge root was not found: ${dialogForgeRoot}`);
 }
 
-const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
-
 if (shouldBuild) {
-    run(npmCommand, [
+    const invocation = npmInvocation([
         "run",
         "build:web",
         "--",
         "--out-dir",
         productWebDist,
         productRoot
-    ], {
+    ]);
+
+    run(invocation.command, invocation.args, {
         cwd: dialogForgeRoot,
         env: Object.assign({}, process.env, {
             DIALOGFORGE_WEB_PRODUCT_PATH: productRoot
