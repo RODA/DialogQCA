@@ -1,0 +1,37 @@
+name: Check product
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out product
+        uses: actions/checkout@v5
+        with:
+          path: product
+
+      - name: Check out DialogForge
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ vars.DIALOGFORGE_REPOSITORY || 'dusadrian/DialogForge' }}
+          ref: ${{ vars.DIALOGFORGE_REF || 'main' }}
+          path: DialogForge
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: DialogForge/package-lock.json
+
+      - name: Install DialogForge dependencies
+        working-directory: DialogForge
+        run: npm ci
+
+      - name: Check product contribution
+        working-directory: product
+        run: npm run check

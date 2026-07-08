@@ -1,0 +1,102 @@
+name: Build DialogQCA macOS
+
+on:
+  workflow_dispatch:
+    inputs:
+      dialogforge_ref:
+        description: DialogForge branch, tag, or commit SHA.
+        required: false
+        default: ""
+        type: string
+      publish_release:
+        description: Upload build outputs to a GitHub release.
+        required: false
+        default: true
+        type: boolean
+      release_tag:
+        description: Release tag to upload artifacts to (used when publishing).
+        required: false
+        default: dqmi
+        type: string
+      release_repository:
+        description: Target release repository in owner/repo form (used when publishing).
+        required: false
+        default: dusadrian/binaries
+        type: string
+      overwrite_release_assets:
+        description: Replace existing release assets with matching filenames (used when publishing).
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  macos:
+    runs-on: macos-15-intel
+    steps:
+      - name: Check out product
+        uses: actions/checkout@v5
+        with:
+          path: product
+
+      - name: Check out DialogForge
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ vars.DIALOGFORGE_REPOSITORY || 'dusadrian/DialogForge' }}
+          ref: ${{ inputs.dialogforge_ref != '' && inputs.dialogforge_ref || vars.DIALOGFORGE_REF || 'main' }}
+          path: DialogForge
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: DialogForge/package-lock.json
+
+      - name: Install DialogForge dependencies
+        working-directory: DialogForge
+        run: npm ci
+
+      - name: Build macOS artifact
+        working-directory: product
+        run: npm run build -- --macos-intel
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dialogqca-macos
+          path: product/build/output/*.dmg
+          if-no-files-found: error
+
+      - name: Upload macOS artifact to release
+        if: ${{ inputs.publish_release }}
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_UPLOAD_TOKEN != '' && secrets.RELEASE_UPLOAD_TOKEN || secrets.DIALOGFORGE_SIGNING_TOKEN }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          RELEASE_REPOSITORY: ${{ inputs.release_repository }}
+          OVERWRITE_RELEASE_ASSETS: ${{ inputs.overwrite_release_assets }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "DIALOGFORGE_SIGNING_TOKEN is required to upload release assets."
+            exit 1
+          fi
+
+          if ! gh release view "$RELEASE_TAG" --repo "$RELEASE_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --repo "$RELEASE_REPOSITORY" --prerelease --latest=false --title "$RELEASE_TAG" --notes "" \
+              || gh release view "$RELEASE_TAG" --repo "$RELEASE_REPOSITORY" >/dev/null
+          fi
+
+          cmd=(gh release upload "$RELEASE_TAG" --repo "$RELEASE_REPOSITORY")
+          if [ "$OVERWRITE_RELEASE_ASSETS" = "true" ]; then
+            cmd+=(--clobber)
+          fi
+          cmd+=(
+            product/build/output/*.dmg
+            product/build/output/*.zip
+            product/build/output/*.zip.blockmap
+            product/build/output/latest-mac.yml
+          )
+          "${cmd[@]}"

@@ -1,0 +1,54 @@
+name: Release signed Windows
+
+on:
+  workflow_dispatch:
+    inputs:
+      product_ref:
+        description: DialogQCA branch, tag, or commit SHA. Leave empty to use this commit.
+        required: false
+        default: ""
+        type: string
+      release_tag:
+        description: Release tag to upload signed artifacts to.
+        required: true
+        default: dqwi
+        type: string
+      release_repository:
+        description: Target repository in owner/repo form.
+        required: false
+        default: dusadrian/binaries
+        type: string
+      overwrite_release_assets:
+        description: Replace release assets with matching filenames.
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  request-signing:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request DialogForge Windows signing
+        env:
+          GH_TOKEN: ${{ secrets.DIALOGFORGE_SIGNING_TOKEN }}
+          PRODUCT_REF: ${{ inputs.product_ref != '' && inputs.product_ref || github.sha }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          RELEASE_REPOSITORY: ${{ inputs.release_repository }}
+          OVERWRITE_RELEASE_ASSETS: ${{ inputs.overwrite_release_assets }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "DIALOGFORGE_SIGNING_TOKEN is required to request the private DialogForge signing broker."
+            exit 1
+          fi
+
+          gh workflow run sign-windows-product.yml \
+            --repo dusadrian/DialogForge \
+            --field product_repository=RODA/DialogQCA \
+            --field product_ref="$PRODUCT_REF" \
+            --field release_tag="$RELEASE_TAG" \
+            --field release_repository="$RELEASE_REPOSITORY" \
+            --field overwrite_release_assets="$OVERWRITE_RELEASE_ASSETS"
