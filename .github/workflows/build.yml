@@ -1,0 +1,273 @@
+name: build all platforms
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Platform to build.
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - linux
+          - windows
+          - macos
+      dialogforge_ref:
+        description: DialogForge branch, tag, or commit SHA.
+        required: false
+        default: ""
+        type: string
+      publish_release:
+        description: Upload build outputs to a GitHub release.
+        required: false
+        default: true
+        type: boolean
+      linux_release_tag:
+        description: Release tag for Linux Intel artifacts.
+        required: false
+        default: li
+        type: string
+      windows_release_tag:
+        description: Release tag for Windows Intel artifacts.
+        required: false
+        default: wi
+        type: string
+      macos_release_tag:
+        description: Release tag for macOS Intel artifacts.
+        required: false
+        default: mi
+        type: string
+      release_repository:
+        description: Target release repository in owner/repo form (used when publishing).
+        required: false
+        default: RODA/DialogQCA
+        type: string
+      overwrite_release_assets:
+        description: Replace existing release assets with matching filenames (used when publishing).
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  linux:
+    if: ${{ inputs.platform == 'all' || inputs.platform == 'linux' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out product
+        uses: actions/checkout@v5
+        with:
+          path: product
+
+      - name: Check out DialogForge
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ vars.DIALOGFORGE_REPOSITORY || 'dusadrian/DialogForge' }}
+          ref: ${{ inputs.dialogforge_ref != '' && inputs.dialogforge_ref || vars.DIALOGFORGE_REF || 'main' }}
+          path: DialogForge
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: DialogForge/package-lock.json
+
+      - name: Install DialogForge dependencies
+        working-directory: DialogForge
+        run: npm ci
+
+      - name: Build Linux artifact
+        working-directory: product
+        run: npm run build
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dialogqca-linux
+          path: product/build/output/*.AppImage
+          if-no-files-found: error
+
+      - name: Upload Linux artifact to release
+        if: ${{ inputs.publish_release }}
+        shell: bash
+        env:
+          CURRENT_REPOSITORY: ${{ github.repository }}
+          RELEASE_TAG: ${{ inputs.linux_release_tag }}
+          RELEASE_REPOSITORY: ${{ inputs.release_repository }}
+          OVERWRITE_RELEASE_ASSETS: ${{ inputs.overwrite_release_assets }}
+        run: |
+          set -euo pipefail
+          if [ "$RELEASE_REPOSITORY" = "$CURRENT_REPOSITORY" ]; then
+            export GH_TOKEN='${{ github.token }}'
+          else
+            export GH_TOKEN='${{ secrets.RELEASE_UPLOAD_TOKEN != '' && secrets.RELEASE_UPLOAD_TOKEN || secrets.DIALOGFORGE_SIGNING_TOKEN }}'
+          fi
+
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "A release upload token is required for cross-repository uploads."
+            exit 1
+          fi
+
+          if ! gh release view "$RELEASE_TAG" --repo "$RELEASE_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --repo "$RELEASE_REPOSITORY" --prerelease --latest=false --title "$RELEASE_TAG" --notes "" \
+              || gh release view "$RELEASE_TAG" --repo "$RELEASE_REPOSITORY" >/dev/null
+          fi
+
+          cmd=(gh release upload "$RELEASE_TAG" --repo "$RELEASE_REPOSITORY")
+          if [ "$OVERWRITE_RELEASE_ASSETS" = "true" ]; then
+            cmd+=(--clobber)
+          fi
+
+          files=(product/build/output/*.AppImage)
+          while IFS= read -r optional_file; do
+            files+=("$optional_file")
+          done < <(find product/build/output -maxdepth 1 -type f \( -name '*.AppImage.blockmap' -o -name 'latest-linux.yml' \) | sort)
+
+          cmd+=("${files[@]}")
+          "${cmd[@]}"
+
+  windows:
+    if: ${{ inputs.platform == 'all' || inputs.platform == 'windows' }}
+    runs-on: windows-latest
+    steps:
+      - name: Check out product
+        uses: actions/checkout@v5
+        with:
+          path: product
+
+      - name: Check out DialogForge
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ vars.DIALOGFORGE_REPOSITORY || 'dusadrian/DialogForge' }}
+          ref: ${{ inputs.dialogforge_ref != '' && inputs.dialogforge_ref || vars.DIALOGFORGE_REF || 'main' }}
+          path: DialogForge
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: DialogForge/package-lock.json
+
+      - name: Install DialogForge dependencies
+        working-directory: DialogForge
+        run: npm ci
+
+      - name: Build Windows artifact
+        working-directory: product
+        run: npm run build
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dialogqca-windows
+          path: |
+            product/build/output/*.exe
+            product/build/output/*.exe.blockmap
+            product/build/output/latest.yml
+          if-no-files-found: error
+
+  request-signing:
+    if: ${{ inputs.publish_release && (inputs.platform == 'all' || inputs.platform == 'windows') }}
+    needs: windows
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request DialogForge Windows signing and release upload
+        env:
+          GH_TOKEN: ${{ secrets.DIALOGFORGE_SIGNING_TOKEN }}
+          RELEASE_TAG: ${{ inputs.windows_release_tag }}
+          RELEASE_REPOSITORY: ${{ inputs.release_repository }}
+          OVERWRITE_RELEASE_ASSETS: ${{ inputs.overwrite_release_assets }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "DIALOGFORGE_SIGNING_TOKEN is required to request the private DialogForge signing broker."
+            exit 1
+          fi
+
+          gh workflow run sign-windows-product.yml \
+            --repo dusadrian/DialogForge \
+            --field product_repository=RODA/DialogQCA \
+            --field product_ref="${{ github.sha }}" \
+            --field release_tag="$RELEASE_TAG" \
+            --field release_repository="$RELEASE_REPOSITORY" \
+            --field overwrite_release_assets="$OVERWRITE_RELEASE_ASSETS"
+
+  macos:
+    if: ${{ inputs.platform == 'all' || inputs.platform == 'macos' }}
+    runs-on: macos-15-intel
+    steps:
+      - name: Check out product
+        uses: actions/checkout@v5
+        with:
+          path: product
+
+      - name: Check out DialogForge
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ vars.DIALOGFORGE_REPOSITORY || 'dusadrian/DialogForge' }}
+          ref: ${{ inputs.dialogforge_ref != '' && inputs.dialogforge_ref || vars.DIALOGFORGE_REF || 'main' }}
+          path: DialogForge
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: DialogForge/package-lock.json
+
+      - name: Install DialogForge dependencies
+        working-directory: DialogForge
+        run: npm ci
+
+      - name: Build macOS artifact
+        working-directory: product
+        run: npm run build -- --macos-intel
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dialogqca-macos
+          path: product/build/output/*.dmg
+          if-no-files-found: error
+
+      - name: Upload macOS artifact to release
+        if: ${{ inputs.publish_release }}
+        env:
+          CURRENT_REPOSITORY: ${{ github.repository }}
+          RELEASE_TAG: ${{ inputs.macos_release_tag }}
+          RELEASE_REPOSITORY: ${{ inputs.release_repository }}
+          OVERWRITE_RELEASE_ASSETS: ${{ inputs.overwrite_release_assets }}
+        run: |
+          set -euo pipefail
+          if [ "$RELEASE_REPOSITORY" = "$CURRENT_REPOSITORY" ]; then
+            export GH_TOKEN='${{ github.token }}'
+          else
+            export GH_TOKEN='${{ secrets.RELEASE_UPLOAD_TOKEN != '' && secrets.RELEASE_UPLOAD_TOKEN || secrets.DIALOGFORGE_SIGNING_TOKEN }}'
+          fi
+
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "A release upload token is required for cross-repository uploads."
+            exit 1
+          fi
+
+          if ! gh release view "$RELEASE_TAG" --repo "$RELEASE_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --repo "$RELEASE_REPOSITORY" --prerelease --latest=false --title "$RELEASE_TAG" --notes "" \
+              || gh release view "$RELEASE_TAG" --repo "$RELEASE_REPOSITORY" >/dev/null
+          fi
+
+          cmd=(gh release upload "$RELEASE_TAG" --repo "$RELEASE_REPOSITORY")
+          if [ "$OVERWRITE_RELEASE_ASSETS" = "true" ]; then
+            cmd+=(--clobber)
+          fi
+          cmd+=(
+            product/build/output/*.dmg
+            product/build/output/*.zip
+            product/build/output/*.zip.blockmap
+            product/build/output/latest-mac.yml
+          )
+          "${cmd[@]}"

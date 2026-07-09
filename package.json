@@ -1,0 +1,90 @@
+{
+    "private": true,
+    "scripts": {
+        "start": "node scripts/start-product.js",
+        "check": "node scripts/check-product.js",
+        "build": "node scripts/build-product.js",
+        "check:build-ownership": "node scripts/check-build-ownership.js",
+        "webr:library": "node scripts/download-webr-library.js",
+        "verify:electron-dialog": "node tests/electron/verify-DialogQCA-dialog-window.js",
+        "dev:web": "node scripts/run-dialogforge-web.js --replace-port",
+        "build:web": "node scripts/run-dialogforge-web.js --build-only",
+        "serve:web": "node scripts/run-dialogforge-web.js --no-build --replace-port",
+        "verify:web-deployment": "node scripts/verify-web-deployment.js"
+    },
+    "devDependencies": {
+        "@dialogforge/core": "file:../DialogForge/dist/sdk/core"
+    },
+    "name": "dialogqca",
+    "version": "1.0.17",
+    "description": "A graphical user interface for the QCA package in R.",
+    "author": "Adrian Dusa",
+    "contributors": [
+        "RODA"
+    ],
+    "license": "SEE LICENSE IN LICENSE",
+    "build": {
+        "extraResources": [
+            "LICENSE"
+        ],
+        "mac": {
+            "artifactName": "${productName}-${version}-${arch}-mac.${ext}",
+            "extendInfo": {
+                "NSHumanReadableCopyright": "© 2025-2026 Adrian Dusa — Academic Non-Commercial License (see LICENSE file for details)."
+            },
+            "target": [
+                {
+                    "target": "dmg",
+                    "arch": [
+                        "arm64"
+                    ]
+                }
+            ]
+        },
+        "win": {
+            "legalTrademarks": "Academic Non-Commercial License (see LICENSE file for details).",
+            "target": [
+                {
+                    "target": "nsis",
+                    "arch": [
+                        "x64"
+                    ]
+                },
+                {
+                    "target": "portable",
+                    "arch": [
+                        "x64"
+                    ]
+                }
+            ]
+        },
+        "linux": {
+            "target": [
+                {
+                    "target": "AppImage",
+                    "arch": [
+                        "x64"
+                    ]
+                }
+            ]
+        }
+    },
+    "product": {
+        "id": "DialogQCA",
+        "name": "DialogQCA",
+        "appId": "org.roda.dialogqca",
+        "releaseTags": {
+            "linuxIntel": "li",
+            "windowsIntel": "wi",
+            "macosIntel": "mi",
+            "macosSilicon": "ms",
+            "webrVFS": "web"
+        },
+        "runtimeProviders": [
+            "r",
+            "server-r",
+            "webr"
+        ],
+        "defaultRuntimeProvider": "r"
+    }
+}

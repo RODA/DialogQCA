@@ -1,0 +1,100 @@
+name: build Windows intel
+
+on:
+  workflow_dispatch:
+    inputs:
+      dialogforge_ref:
+        description: DialogForge branch, tag, or commit SHA.
+        required: false
+        default: ""
+        type: string
+      publish_signed_release:
+        description: Also request signing and upload to a GitHub release.
+        required: false
+        default: true
+        type: boolean
+      release_tag:
+        description: Release tag to upload signed artifacts to (used when publishing).
+        required: false
+        default: wi
+        type: string
+      release_repository:
+        description: Target release repository in owner/repo form (used when publishing).
+        required: false
+        default: RODA/DialogQCA
+        type: string
+      overwrite_release_assets:
+        description: Replace existing release assets with matching filenames (used when publishing).
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Check out product
+        uses: actions/checkout@v5
+        with:
+          path: product
+
+      - name: Check out DialogForge
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ vars.DIALOGFORGE_REPOSITORY || 'dusadrian/DialogForge' }}
+          ref: ${{ inputs.dialogforge_ref != '' && inputs.dialogforge_ref || vars.DIALOGFORGE_REF || 'main' }}
+          path: DialogForge
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: DialogForge/package-lock.json
+
+      - name: Install DialogForge dependencies
+        working-directory: DialogForge
+        run: npm ci
+
+      - name: Build Windows artifact
+        working-directory: product
+        run: npm run build
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dialogqca-windows
+          path: |
+            product/build/output/*.exe
+            product/build/output/*.exe.blockmap
+            product/build/output/latest.yml
+          if-no-files-found: error
+
+  request-signing:
+    if: ${{ inputs.publish_signed_release }}
+    needs: windows
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request DialogForge Windows signing and release upload
+        env:
+          GH_TOKEN: ${{ secrets.DIALOGFORGE_SIGNING_TOKEN }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          RELEASE_REPOSITORY: ${{ inputs.release_repository }}
+          OVERWRITE_RELEASE_ASSETS: ${{ inputs.overwrite_release_assets }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "DIALOGFORGE_SIGNING_TOKEN is required to request the private DialogForge signing broker."
+            exit 1
+          fi
+
+          gh workflow run sign-windows-product.yml \
+            --repo dusadrian/DialogForge \
+            --field product_repository=RODA/DialogQCA \
+            --field product_ref="${{ github.sha }}" \
+            --field release_tag="$RELEASE_TAG" \
+            --field release_repository="$RELEASE_REPOSITORY" \
+            --field overwrite_release_assets="$OVERWRITE_RELEASE_ASSETS"

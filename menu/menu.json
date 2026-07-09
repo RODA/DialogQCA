@@ -1,0 +1,106 @@
+[
+    {
+        "id": "Data",
+        "labelKey": "menu.root.data",
+        "label": "Data",
+        "type": "submenu",
+        "items": [
+            {
+                "id": "QcaCalibrate",
+                "labelKey": "menu.root.data.calibrate",
+                "label": "Calibrate",
+                "type": "product-dialog",
+                "dialog": "calibrate",
+                "capability": "qca.dialog.calibrate"
+            },
+            {
+                "id": "QcaRecode",
+                "labelKey": "menu.root.data.recode",
+                "label": "Recode conditions",
+                "type": "product-dialog",
+                "dialog": "recode",
+                "capability": "qca.dialog.recode"
+            }
+        ]
+    },
+    {
+        "id": "Analyze",
+        "labelKey": "menu.root.analyze",
+        "label": "Analyze",
+        "type": "submenu",
+        "items": [
+            {
+                "id": "QcaTruthTable",
+                "labelKey": "menu.root.analyze.truthtable",
+                "label": "Truth table",
+                "type": "product-dialog",
+                "dialog": "truthTable",
+                "capability": "qca.dialog.truthTable"
+            },
+            {
+                "id": "QcaIncoherent",
+                "labelKey": "menu.root.analyze.incoherent",
+                "label": "Incoherent configurations",
+                "type": "product-dialog",
+                "dialog": "incoherent",
+                "capability": "qca.dialog.incoherent"
+            },
+            {
+                "id": "QcaMinimize",
+                "labelKey": "menu.root.analyze.minimize",
+                "label": "Minimize",
+                "type": "product-dialog",
+                "dialog": "minimize",
+                "capability": "qca.dialog.minimize"
+            }
+        ]
+    },
+    {
+        "id": "Graphs",
+        "labelKey": "menu.root.graphs",
+        "label": "Graphs",
+        "type": "submenu",
+        "items": [
+            {
+                "id": "QcaXyPlot",
+                "labelKey": "menu.root.graphs.xyplot",
+                "label": "XY plot",
+                "type": "product-dialog",
+                "dialog": "xyplot",
+                "capability": "qca.dialog.xyplot"
+            },
+            {
+                "id": "QcaVenn",
+                "labelKey": "menu.root.graphs.venn",
+                "label": "Venn diagram",
+                "type": "product-dialog",
+                "dialog": "venn",
+                "capability": "qca.dialog.venn"
+            }
+        ]
+    },
+    {
+        "id": "Packages",
+        "labelKey": "menu.root.packages",
+        "label": "Packages",
+        "type": "submenu",
+        "items": [
+            {
+                "id": "QcaInstallRequiredPackages",
+                "labelKey": "menu.root.packages.install_required_r_packages",
+                "label": "Install required R packages",
+                "type": "product-command",
+                "command": "qca.packages.installRequired",
+                "capability": "qca.packages.required"
+            },
+            {
+                "id": "QcaUpdateRequiredPackages",
+                "labelKey": "menu.root.packages.update_dev_versions",
+                "label": "Update development versions",
+                "type": "product-command",
+                "command": "qca.packages.updateRequired",
+                "capability": "qca.packages.required"
+            }
+        ]
+    }
+]
