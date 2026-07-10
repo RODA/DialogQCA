@@ -95,6 +95,38 @@ jobs:
               || gh release view "$RELEASE_TAG" --repo "$RELEASE_REPOSITORY" >/dev/null
           fi
 
+          if [ "$OVERWRITE_RELEASE_ASSETS" = "true" ]; then
+            release_assets=()
+            while IFS= read -r asset; do
+              release_assets+=("$asset")
+            done < <(gh release view "$RELEASE_TAG" --repo "$RELEASE_REPOSITORY" --json assets --jq '.assets[].name')
+            cleanup_patterns=()
+            shopt -s nullglob
+            for artifact in product/build/output/*.dmg product/build/output/*.zip product/build/output/*.zip.blockmap product/build/output/latest-mac.yml; do
+              asset_name="$(basename "$artifact")"
+              cleanup_patterns+=("$asset_name")
+              case "$asset_name" in
+                *-arm64-mac.zip|*-arm64-mac.zip.blockmap)
+                  cleanup_patterns+=("*-arm64-mac.zip" "*-arm64-mac.zip.blockmap")
+                  ;;
+                *-x64-mac.zip|*-x64-mac.zip.blockmap)
+                  cleanup_patterns+=("*-x64-mac.zip" "*-x64-mac.zip.blockmap")
+                  ;;
+              esac
+            done
+
+            for asset in "${release_assets[@]}"; do
+              for pattern in "${cleanup_patterns[@]}"; do
+                case "$asset" in
+                  $pattern)
+                    gh release delete-asset "$RELEASE_TAG" "$asset" --repo "$RELEASE_REPOSITORY" --yes
+                    break
+                    ;;
+                esac
+              done
+            done
+          fi
+
           cmd=(gh release upload "$RELEASE_TAG" --repo "$RELEASE_REPOSITORY")
           if [ "$OVERWRITE_RELEASE_ASSETS" = "true" ]; then
             cmd+=(--clobber)

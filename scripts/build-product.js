@@ -243,7 +243,7 @@ const injectAutoUpdatePolicy = function(packagePath, releaseTag) {
 const rewriteMacUpdateFeed = function(dialogForgeRoot, outputDir) {
     const latestPath = path.join(outputDir, "latest-mac.yml");
     if (!fs.existsSync(latestPath)) {
-        return;
+        return "";
     }
 
     const yaml = require(path.join(dialogForgeRoot, "node_modules/js-yaml"));
@@ -254,7 +254,7 @@ const rewriteMacUpdateFeed = function(dialogForgeRoot, outputDir) {
     });
 
     if (!zipEntry) {
-        return;
+        return "";
     }
 
     const zipName = String(zipEntry.url || "");
@@ -270,6 +270,8 @@ const rewriteMacUpdateFeed = function(dialogForgeRoot, outputDir) {
         lineWidth: -1,
         noRefs: true
     }));
+
+    return zipName;
 };
 
 const cleanupBuildOutput = function(dialogForgeRoot, outputDir, platform, forceMacosIntel) {
@@ -288,7 +290,7 @@ const cleanupBuildOutput = function(dialogForgeRoot, outputDir, platform, forceM
         return;
     }
 
-    rewriteMacUpdateFeed(dialogForgeRoot, outputDir);
+    const currentZipName = rewriteMacUpdateFeed(dialogForgeRoot, outputDir);
     const stableDmgName = `DialogQCA_${forceMacosIntel ? "intel" : "silicon"}.dmg`;
 
     fs.readdirSync(outputDir, { withFileTypes: true }).forEach((entry) => {
@@ -299,8 +301,8 @@ const cleanupBuildOutput = function(dialogForgeRoot, outputDir, platform, forceM
         const fileName = entry.name;
         const keep = fileName === stableDmgName
             || fileName === "latest-mac.yml"
-            || /\.zip$/i.test(fileName)
-            || /\.zip\.blockmap$/i.test(fileName);
+            || (currentZipName && fileName === currentZipName)
+            || (currentZipName && fileName === `${currentZipName}.blockmap`);
 
         if (!keep) {
             removeIfExists(path.join(outputDir, fileName));
