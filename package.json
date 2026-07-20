@@ -10,7 +10,10 @@
         "dev:web": "node scripts/run-dialogforge-web.js --replace-port",
         "build:web": "node scripts/run-dialogforge-web.js --build-only",
         "serve:web": "node scripts/run-dialogforge-web.js --no-build --replace-port",
-        "verify:web-deployment": "node scripts/verify-web-deployment.js"
+        "verify:web-deployment": "node scripts/verify-web-deployment.js",
+        "verify:production": "node scripts/verify-production.js",
+        "verify:production:electron": "node scripts/verify-production.js --electron-only",
+        "verify:production:web": "node scripts/verify-production.js --web-only"
     },
     "devDependencies": {
         "@dialogforge/core": "file:../DialogForge/dist/sdk/core"
