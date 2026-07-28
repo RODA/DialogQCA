@@ -19,7 +19,7 @@
         "@dialogforge/core": "file:../DialogForge/dist/sdk/core"
     },
     "name": "dialogqca",
-    "version": "1.0.19",
+    "version": "1.0.20",
     "description": "A graphical user interface for the QCA package in R.",
     "author": "Adrian Dusa",
     "contributors": [
@@ -88,6 +88,29 @@
             "server-r",
             "webr"
         ],
+        "webRPackageLibrary": {
+            "releaseRepository": "dusadrian/binaries",
+            "mountpoint": "/.dialogforge-library",
+            "recommendedPackages": [
+                "admisc",
+                "declared",
+                "DDIwR",
+                "QCA",
+                "venn",
+                "knitr",
+                "evaluate",
+                "highr",
+                "xfun",
+                "yaml"
+            ],
+            "requiredForNativeHelpExamples": [
+                "knitr",
+                "evaluate",
+                "highr",
+                "xfun",
+                "yaml"
+            ]
+        },
         "defaultRuntimeProvider": "r"
     }
 }
