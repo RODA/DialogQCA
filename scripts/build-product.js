@@ -63,10 +63,10 @@ const runNpm = function(cwd, args) {
     }
 };
 
-const runNode = function(cwd, args) {
+const runNode = function(cwd, args, env = process.env) {
     const result = spawnSync(process.execPath, args, {
         cwd,
-        env: process.env,
+        env,
         stdio: "inherit"
     });
 
@@ -81,10 +81,6 @@ const runNode = function(cwd, args) {
 
 const readJson = function(filePath) {
     return JSON.parse(fs.readFileSync(filePath, "utf8"));
-};
-
-const writeJson = function(filePath, value) {
-    fs.writeFileSync(filePath, JSON.stringify(value, null, 4) + "\n");
 };
 
 const removeIfExists = function(filePath) {
@@ -226,20 +222,6 @@ const resolveReleaseRepository = function(packagePath) {
     );
 };
 
-const injectAutoUpdatePolicy = function(packagePath, releaseTag) {
-    const packageJson = readJson(packagePath);
-    const releaseRepository = resolveReleaseRepository(packagePath);
-    packageJson.product = packageJson.product && typeof packageJson.product === "object"
-        ? packageJson.product
-        : {};
-    packageJson.product.autoUpdate = {
-        releaseRepository,
-        releaseTag
-    };
-
-    writeJson(packagePath, packageJson);
-};
-
 const rewriteMacUpdateFeed = function(dialogForgeRoot, outputDir) {
     const latestPath = path.join(outputDir, "latest-mac.yml");
     if (!fs.existsSync(latestPath)) {
@@ -310,36 +292,6 @@ const cleanupBuildOutput = function(dialogForgeRoot, outputDir, platform, forceM
     });
 };
 
-const forceMacosIntelBuildTarget = function(packagePath) {
-    const packageJson = readJson(packagePath);
-    const build = packageJson.build && typeof packageJson.build === "object"
-        ? packageJson.build
-        : {};
-    const mac = build.mac && typeof build.mac === "object"
-        ? build.mac
-        : {};
-    const targets = Array.isArray(mac.target)
-        ? mac.target
-        : [mac.target].filter(Boolean);
-
-    if (targets.length === 0) {
-        throw new Error("Cannot force macOS Intel packaging without build.mac.target.");
-    }
-
-    packageJson.build = build;
-    packageJson.build.mac = mac;
-    packageJson.build.mac.target = targets.map((target) => {
-        if (!target || typeof target !== "object") {
-            throw new Error("Cannot force macOS Intel packaging for a non-object macOS target.");
-        }
-        return Object.assign({}, target, {
-            arch: ["x64"]
-        });
-    });
-
-    writeJson(packagePath, packageJson);
-};
-
 const main = function() {
     const dialogForgeRoot = resolveDialogForgeRoot();
     const requestedArgs = process.argv.slice(2);
@@ -348,38 +300,33 @@ const main = function() {
         return arg !== macosIntelArgument;
     });
     const packagePath = path.join(productRoot, "package.json");
-    const originalPackageJson = fs.readFileSync(packagePath, "utf8");
     const updateReleaseTag = updateReleaseTagForBuild(packagePath, packagingArgs, forceMacosIntel);
+    const releaseRepository = resolveReleaseRepository(packagePath);
     const platform = requestedPlatform(packagingArgs);
     const outputDir = path.join(productRoot, "build/output");
+    const packagingEnv = Object.assign({}, process.env, {
+        DIALOGFORGE_RELEASE_REPOSITORY: releaseRepository,
+        DIALOGFORGE_RELEASE_TAG: updateReleaseTag
+    });
 
     runNpm(productRoot, ["run", "check"]);
 
-    try {
-        injectAutoUpdatePolicy(packagePath, updateReleaseTag);
-
-        if (forceMacosIntel) {
-            if (process.platform !== "darwin") {
-                throw new Error(`${macosIntelArgument} can only be used on macOS.`);
-            }
-            forceMacosIntelBuildTarget(packagePath);
-        }
-
-        runNode(dialogForgeRoot, [
-            path.join(dialogForgeRoot, "scripts/build-desktop.js"),
-            "--out-dir",
-            path.join(productRoot, "dist"),
-            "--product-path",
-            productRoot,
-            "--output-dir",
-            outputDir,
-            ...packagingArgs
-        ]);
-        cleanupBuildOutput(dialogForgeRoot, outputDir, platform, forceMacosIntel);
+    if (forceMacosIntel && process.platform !== "darwin") {
+        throw new Error(`${macosIntelArgument} can only be used on macOS.`);
     }
-    finally {
-        fs.writeFileSync(packagePath, originalPackageJson);
-    }
+
+    runNode(dialogForgeRoot, [
+        path.join(dialogForgeRoot, "scripts/build-desktop.js"),
+        "--out-dir",
+        path.join(productRoot, "dist"),
+        "--product-path",
+        productRoot,
+        "--output-dir",
+        outputDir,
+        ...(forceMacosIntel ? ["--arch", "x64"] : []),
+        ...packagingArgs
+    ], packagingEnv);
+    cleanupBuildOutput(dialogForgeRoot, outputDir, platform, forceMacosIntel);
 };
 
 main();

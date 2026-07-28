@@ -110,8 +110,9 @@ const assertBuildScriptReleaseTags = function(scripts) {
         "GITHUB_REPOSITORY",
         "remote.origin.url",
         "resolveReleaseRepository(packagePath)",
-        "injectAutoUpdatePolicy(packagePath, updateReleaseTag)",
-        "fs.writeFileSync(packagePath, originalPackageJson)",
+        "DIALOGFORGE_RELEASE_REPOSITORY",
+        "DIALOGFORGE_RELEASE_TAG",
+        '...(forceMacosIntel ? ["--arch", "x64"] : [])',
         "cleanupBuildOutput(dialogForgeRoot, outputDir, platform, forceMacosIntel)",
         "scripts/build-desktop.js",
         "path.join(productRoot, \"dist\")",
@@ -121,7 +122,17 @@ const assertBuildScriptReleaseTags = function(scripts) {
         "if (entry.isDirectory())"
     ].forEach((expected) => {
         if (!buildProduct.includes(expected)) {
-            fail("scripts/build-product.js must inject platform-specific update feed metadata: " + expected);
+            fail("scripts/build-product.js must pass platform-specific packaging metadata: " + expected);
+        }
+    });
+
+    [
+        "injectAutoUpdatePolicy",
+        "forceMacosIntelBuildTarget",
+        "fs.writeFileSync(packagePath"
+    ].forEach((forbidden) => {
+        if (buildProduct.includes(forbidden)) {
+            fail("scripts/build-product.js must not rewrite the source package.json: " + forbidden);
         }
     });
 
