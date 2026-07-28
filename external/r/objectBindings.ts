@@ -42,6 +42,11 @@ export const registerQcaObjectBindings = function(options: {
     ) => Promise<Record<string, unknown>[] | null>;
 }): void {
     const baseBindObjects = options.api.bindObjects;
+
+    if (typeof baseBindObjects === "function") {
+        return;
+    }
+
     const activeBindings = new Set<string>();
 
     options.api.bindObjects = function(parameters) {
@@ -49,9 +54,6 @@ export const registerQcaObjectBindings = function(options: {
         const datasetControl = asString(payload.datasets);
         const variableControls = readVariableControls(payload.variables);
         const autoRefresh = payload.autoRefresh !== false;
-        const baseBinding = typeof baseBindObjects === "function"
-            ? baseBindObjects(parameters)
-            : null;
         const bindingKey = [
             datasetControl,
             autoRefresh ? "auto" : "manual",
@@ -64,8 +66,7 @@ export const registerQcaObjectBindings = function(options: {
             }
 
             if (
-                !baseBinding
-                && typeof options.runtimeApi.setValue === "function"
+                typeof options.runtimeApi.setValue === "function"
             ) {
                 const datasets = options.runtimeApi.listObjects?.("datasets");
 

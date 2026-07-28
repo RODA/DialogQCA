@@ -838,7 +838,12 @@ export const createCalibrateDialogRuntime = function(
                 options.api.clearContent?.(config.variableContainer);
             }
 
-            refresh(config, state);
+            if (state.selectedVariable) {
+                await loadVariableValues(config, state);
+            } else {
+                refresh(config, state);
+            }
+
             return null;
         }
 
