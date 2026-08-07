@@ -127,6 +127,11 @@ const createInitialState = function(): XYPlotDialogState {
 
 export const createXYPlotDialogRuntime = function(options: XYPlotDialogOptions) {
     const states = new Map<string, XYPlotDialogState>();
+    let observedPlotHost: HTMLElement | null = null;
+    let plotResizeObserver: ResizeObserver | null = null;
+    let pendingPlotRedraw = 0;
+    let drawnPlotWidth = 0;
+    let drawnPlotHeight = 0;
 
     const getConfig = function(payload: unknown): XYPlotDialogConfig {
         const source = asPayloadRecord(payload);
@@ -287,14 +292,18 @@ export const createXYPlotDialogRuntime = function(options: XYPlotDialogOptions) 
             return;
         }
 
+        observePlot(host, config, state);
+
         host.replaceChildren();
 
         const width = host.clientWidth || 545;
         const height = host.clientHeight || 535;
+        drawnPlotWidth = host.clientWidth;
+        drawnPlotHeight = host.clientHeight;
         const svg = createSvgElement("svg", {
             viewBox: `0 0 ${width} ${height}`,
-            width,
-            height
+            width: "100%",
+            height: "100%"
         });
 
         svg.setAttribute("style", "display: block; overflow: visible;");
@@ -316,7 +325,13 @@ export const createXYPlotDialogRuntime = function(options: XYPlotDialogOptions) 
         };
         const squareLeft = 45;
         const squareTop = 0;
-        const squareSize = 500;
+        // The window retains its authored proportions, but the plot host can
+        // still have spare space for axis labels. Draw the actual plot in the
+        // largest square that leaves those gutters intact.
+        const squareSize = Math.max(120, Math.min(
+            width - 50,
+            height - 40
+        ));
         const squareRight = squareLeft + squareSize;
         const squareBottom = squareTop + squareSize;
         const inset = 8;
@@ -538,6 +553,53 @@ export const createXYPlotDialogRuntime = function(options: XYPlotDialogOptions) 
             group.appendChild(text);
             svg.appendChild(group);
         }
+    };
+
+    const redrawPlotForHostSize = function(
+        host: HTMLElement,
+        config: XYPlotDialogConfig,
+        state: XYPlotDialogState
+    ): void {
+        if (
+            !host.isConnected
+            || !host.clientWidth
+            || !host.clientHeight
+            || (host.clientWidth === drawnPlotWidth
+                && host.clientHeight === drawnPlotHeight)
+            || pendingPlotRedraw
+        ) {
+            return;
+        }
+
+        pendingPlotRedraw = window.requestAnimationFrame(() => {
+            pendingPlotRedraw = 0;
+            renderPlot(config, state);
+
+            // The dialog canvas resizes this host from inside its own resize
+            // notification, so the notification carrying the final size can be
+            // dropped while this frame was queued. Re-check once per redraw so
+            // the drawing always settles on the size actually on screen.
+            window.requestAnimationFrame(() => {
+                redrawPlotForHostSize(host, config, state);
+            });
+        });
+    };
+
+    const observePlot = function(
+        host: HTMLElement,
+        config: XYPlotDialogConfig,
+        state: XYPlotDialogState
+    ): void {
+        if (observedPlotHost === host || typeof ResizeObserver !== "function") {
+            return;
+        }
+
+        plotResizeObserver?.disconnect();
+        observedPlotHost = host;
+        plotResizeObserver = new ResizeObserver(() => {
+            redrawPlotForHostSize(host, config, state);
+        });
+        plotResizeObserver.observe(host);
     };
 
     const refresh = function(

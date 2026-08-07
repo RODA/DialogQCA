@@ -251,6 +251,55 @@ const positionTooltip = function(
 export const createCalibratePreviewRenderer = function(
     options: CalibratePreviewRendererOptions
 ) {
+    // The plot grows with the dialog window, so the drawing has to follow the
+    // host box. A redraw needs nothing beyond the last payload, so there is no
+    // runtime round trip and one redraw per animation frame stays affordable
+    // while the window is being dragged.
+    let lastPayload: unknown = null;
+    let observedHost: HTMLElement | null = null;
+    let hostObserver: ResizeObserver | null = null;
+    let pendingRedraw = 0;
+    let drawnWidth = 0;
+    let drawnHeight = 0;
+
+    const redrawForHostSize = function(host: HTMLElement): void {
+        if (
+            !lastPayload
+            || pendingRedraw
+            || !host.clientWidth
+            || !host.clientHeight
+            || (host.clientWidth === drawnWidth && host.clientHeight === drawnHeight)
+        ) {
+            return;
+        }
+
+        pendingRedraw = window.requestAnimationFrame(() => {
+            pendingRedraw = 0;
+            void render(lastPayload);
+
+            // The dialog canvas resizes this host from inside its own resize
+            // notification, so the notification carrying the final size can be
+            // dropped while this frame was queued. Re-check once per redraw so
+            // the drawing always settles on the size actually on screen.
+            window.requestAnimationFrame(() => {
+                redrawForHostSize(host);
+            });
+        });
+    };
+
+    const observeHost = function(host: HTMLElement): void {
+        if (observedHost === host || typeof ResizeObserver !== "function") {
+            return;
+        }
+
+        hostObserver?.disconnect();
+        observedHost = host;
+        hostObserver = new ResizeObserver(() => {
+            redrawForHostSize(host);
+        });
+        hostObserver.observe(host);
+    };
+
     const render = async function(payload: unknown): Promise<null> {
         const source = normalizePayload(payload);
         const host = options.api.getElementNode?.(source.target);
@@ -260,6 +309,9 @@ export const createCalibratePreviewRenderer = function(
                 "qca.renderCalibratePreview expects a target Plot element name"
             );
         }
+
+        lastPayload = payload;
+        observeHost(host);
 
         const applyThresholdValues = function(values: string[]): void {
             source.thresholdInputIds.forEach((inputId, index) => {
@@ -292,6 +344,9 @@ export const createCalibratePreviewRenderer = function(
 
         host.replaceChildren();
         host.style.position = "relative";
+
+        drawnWidth = host.clientWidth;
+        drawnHeight = host.clientHeight;
 
         const width = Math.max(120, host.clientWidth || 430);
         const height = Math.max(100, host.clientHeight || 190);

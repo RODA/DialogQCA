@@ -5,6 +5,7 @@
         "title": "Calibrate",
         "width": 695,
         "height": 470,
+        "resizable": true,
         "fontSize": 12,
         "language": "en_US",
         "dependencies": "QCA",
@@ -1105,6 +1106,7 @@
             "borderColor": "#c9c9c9",
             "isVisible": true,
             "isEnabled": true,
+            "resizeWithDialog": true,
             "label": "Button",
             "icon": "none",
             "iconSize": 0,
@@ -1202,6 +1204,7 @@
             "icon": "none",
             "iconSize": 0,
             "height": 22,
+            "moveWithDialog": true,
             "elementIds": ""
         },
         {
@@ -1215,6 +1218,7 @@
             "iconSize": 0,
             "width": 80,
             "height": 22,
+            "moveWithDialog": true,
             "lineClamp": 1,
             "color": "#efefef",
             "fontColor": "#000000",
