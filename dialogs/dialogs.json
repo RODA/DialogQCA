@@ -4,7 +4,6 @@
         "label": "Calibrate",
         "owner": "products/DialogQCA",
         "targetHome": "products/DialogQCA/dialogs/r/calibrate/",
-        "sourceReference": "/Users/dusadrian/Documents/GitHub/DialogQCA/profile/dialogs/calibrate.json",
         "sourceFile": "r/calibrate/dialog.json",
         "status": "source-imported",
         "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime."
@@ -14,7 +13,6 @@
         "label": "Recode conditions",
         "owner": "products/DialogQCA",
         "targetHome": "products/DialogQCA/dialogs/r/recode/",
-        "sourceReference": "/Users/dusadrian/Documents/GitHub/DialogQCA/profile/dialogs/recode.json",
         "sourceFile": "r/recode/dialog.json",
         "status": "source-imported",
         "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime.",
@@ -27,7 +25,6 @@
         "label": "Truth table",
         "owner": "products/DialogQCA",
         "targetHome": "products/DialogQCA/dialogs/r/truthTable/",
-        "sourceReference": "/Users/dusadrian/Documents/GitHub/DialogQCA/profile/dialogs/truthTable.json",
         "sourceFile": "r/truthTable/dialog.json",
         "status": "source-imported",
         "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime."
@@ -37,7 +34,6 @@
         "label": "Incoherent configurations",
         "owner": "products/DialogQCA",
         "targetHome": "products/DialogQCA/dialogs/r/incoherent/",
-        "sourceReference": "/Users/dusadrian/Documents/GitHub/DialogQCA/profile/dialogs/incoherent.json",
         "sourceFile": "r/incoherent/dialog.json",
         "status": "source-imported",
         "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime."
@@ -47,7 +43,6 @@
         "label": "Minimize",
         "owner": "products/DialogQCA",
         "targetHome": "products/DialogQCA/dialogs/r/minimize/",
-        "sourceReference": "/Users/dusadrian/Documents/GitHub/DialogQCA/profile/dialogs/minimize.json",
         "sourceFile": "r/minimize/dialog.json",
         "status": "source-imported",
         "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime."
@@ -57,7 +52,6 @@
         "label": "XY plot",
         "owner": "products/DialogQCA",
         "targetHome": "products/DialogQCA/dialogs/r/xyplot/",
-        "sourceReference": "/Users/dusadrian/Documents/GitHub/DialogQCA/profile/dialogs/xyplot.json",
         "sourceFile": "r/xyplot/dialog.json",
         "status": "source-imported",
         "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime."
@@ -67,7 +61,6 @@
         "label": "Venn diagram",
         "owner": "products/DialogQCA",
         "targetHome": "products/DialogQCA/dialogs/r/venn/",
-        "sourceReference": "/Users/dusadrian/Documents/GitHub/DialogQCA/profile/dialogs/venn.json",
         "sourceFile": "r/venn/dialog.json",
         "status": "source-imported",
         "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime."

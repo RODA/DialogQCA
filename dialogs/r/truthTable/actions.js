@@ -6,83 +6,87 @@ let assign_label_text = '';
 
 const sort_map = { outcome: 'out', inclusion: 'incl', frequency: 'n' };
 
-const buildCommand = () => {
-  const header = (isChecked(assign) && result_name ? result_name + ' <- ' : '') + 'truthTable(' + selected_dataset;
+// Optional arguments share lines up to this width, so a command with many
+// settings stays compact instead of running down the screen.
+const PACKED_WIDTH = 75;
+
+const packArguments = (args) => {
   const lines = [];
-  const mandatory_args = [];
-  const optional_args = [];
+
+  args.forEach((arg) => {
+    const last = lines.length ? lines[lines.length - 1] : '';
+    const joined = last ? last + ', ' + arg : arg;
+
+    if (last && joined.length <= PACKED_WIDTH) {
+      lines[lines.length - 1] = joined;
+    } else {
+      lines.push(arg);
+    }
+  });
+
+  return lines;
+};
+
+const sortByArgument = () => {
+  const selected = getSelected(sort_by);
+  if (!selected.length) return '';
+
+  const parts = selected.map((item) => {
+    const value = String(item || '').trim();
+    const descending = /:desc$/i.test(value);
+    const label = value.replace(/:(asc|desc)$/i, '');
+    return (sort_map[label] || label) + (descending ? '' : '+');
+  });
+
+  return 'sort.by = "' + parts.join(', ') + '"';
+};
+
+const buildCommand = () => {
+  // Named first, because these say what is being explained by what.
+  const mandatory = [];
 
   if (selected_outcome !== '<outcome>' && selected_outcome) {
-    mandatory_args.push('outcome = \"' + (isChecked(neg_out) ? '~' : '') + selected_outcome + '\"');
+    mandatory.push('outcome = "' + (isChecked(neg_out) ? '~' : '') + selected_outcome + '"');
   }
 
   if (selected_conditions.length) {
-    mandatory_args.push('conditions = \"' + selected_conditions.join(', ') + '\"');
+    mandatory.push('conditions = "' + selected_conditions.join(', ') + '"');
   }
+
+  // Only the settings that differ from the R defaults are written out.
+  const optional = [];
 
   const incl_1_value = String(getValue(incl_1) || '').trim() || '1';
   const incl_0_value = String(getValue(incl_0) || '').trim();
   if (incl_1_value !== '1' || (incl_0_value && incl_0_value !== '1')) {
-    if (!incl_0_value) optional_args.push('incl.cut = ' + incl_1_value);
-    else optional_args.push('incl.cut = \"' + incl_1_value + ', ' + incl_0_value + '\"');
+    optional.push(incl_0_value
+      ? 'incl.cut = "' + incl_1_value + ', ' + incl_0_value + '"'
+      : 'incl.cut = ' + incl_1_value);
   }
 
   const n_cut_value = String(getValue(n_cut) || '').trim() || '1';
-  if (n_cut_value !== '1') optional_args.push('n.cut = ' + n_cut_value);
+  if (n_cut_value !== '1') optional.push('n.cut = ' + n_cut_value);
 
   const pri_cut_value = String(getValue(pri_cut) || '').trim();
-  if (pri_cut_value) optional_args.push('pri.cut = ' + pri_cut_value);
+  if (pri_cut_value) optional.push('pri.cut = ' + pri_cut_value);
 
   const exclude_value = String(getValue(exclude) || '').trim();
-  if (exclude_value) optional_args.push('exclude = ' + exclude_value);
+  if (exclude_value) optional.push('exclude = ' + exclude_value);
 
-  if (isChecked(complete)) optional_args.push('complete = TRUE');
-  if (isChecked(use_letters)) optional_args.push('use.letters = TRUE');
-  if (isChecked(show_cases)) optional_args.push('show.cases = TRUE');
-  if (isChecked(show_cases) && isChecked(deviant_cases)) optional_args.push('dcc = TRUE');
+  if (isChecked(complete)) optional.push('complete = TRUE');
+  if (isChecked(use_letters)) optional.push('use.letters = TRUE');
+  if (isChecked(show_cases)) optional.push('show.cases = TRUE');
+  if (isChecked(show_cases) && isChecked(deviant_cases)) optional.push('dcc = TRUE');
 
-  const sort_selected = getSelected(sort_by);
-  if (Array.isArray(sort_selected) && sort_selected.length) {
-    const sort_parts = sort_selected.map((item) => {
-      const value = String(item || '').trim();
-      const descending = /:desc$/i.test(value);
-      const label = value.replace(/:(asc|desc)$/i, '');
-      return (sort_map[label] || label) + (descending ? '' : '+');
-    });
-    optional_args.push('sort.by = \"' + sort_parts.join(', ') + '\"');
-  }
+  optional.push(sortByArgument());
 
-  const all_args = mandatory_args.concat(optional_args);
-  if (!all_args.length) {
-    return header + ')\n';
-  }
+  const command = call('truthTable', [
+    selected_dataset,
+    mandatory,
+    packArguments(optional.filter(Boolean))
+  ]);
 
-  lines.push(header + ',');
-  mandatory_args.forEach((arg) => {
-    lines.push('  ' + arg + ',');
-  });
-
-  const packed = [];
-  optional_args.forEach((arg) => {
-    if (!packed.length) {
-      packed.push(arg);
-      return;
-    }
-    const candidate = packed[packed.length - 1] + ', ' + arg;
-    if (candidate.length > 75) packed.push(arg);
-    else packed[packed.length - 1] = candidate;
-  });
-
-  packed.forEach((line, index) => {
-    lines.push('  ' + line + (index === packed.length - 1 ? '' : ','));
-  });
-
-  if (!optional_args.length && lines.length > 1) {
-    lines[lines.length - 1] = lines[lines.length - 1].replace(/,$/, '');
-  }
-
-  lines.push(')');
-  return lines.join('\n') + '\n';
+  return (isChecked(assign) && result_name ? result_name + ' <- ' : '') + command;
 };
 
 const refresh = () => {

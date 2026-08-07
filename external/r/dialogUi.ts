@@ -10,7 +10,7 @@ import {
 } from "./runtimeApi";
 
 
-export const createQcaDialogUi = function(
+export const createDialogUi = function(
     api: DialogQcaRuntimeApi,
     context: ProfileCustomJSContext
 ) {

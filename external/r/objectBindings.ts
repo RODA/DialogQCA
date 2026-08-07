@@ -2,6 +2,9 @@ import type {
     ProfileCustomJSApi,
     ProfileCustomJSContext
 } from "dialogforge/shared/dialog-runtime/renderer/modules/profileCustomJSApi";
+import {
+    QCA_EXTERNAL_CALLS
+} from "./externalCalls";
 import type {
     DialogQcaRuntimeApi
 } from "./runtimeApi";
@@ -33,7 +36,7 @@ const readVariableControls = function(value: unknown): string[] {
 };
 
 
-export const registerQcaObjectBindings = function(options: {
+export const registerObjectBindings = function(options: {
     api: ProfileCustomJSApi;
     runtimeApi: DialogQcaRuntimeApi;
     context: ProfileCustomJSContext;
@@ -41,6 +44,36 @@ export const registerQcaObjectBindings = function(options: {
         dataset: string
     ) => Promise<Record<string, unknown>[] | null>;
 }): void {
+    // How a selected object is written into a generated command. QCA has no
+    // filter feature yet, so this resolves to the plain object name; once one
+    // exists, answering "filter:getState" is all it takes for every dialog to
+    // pick it up through getReference(), with no dialog script changes.
+    if (options.api.registerObjectReferenceResolver) {
+        options.api.registerObjectReferenceResolver(async (objectName) => {
+            const name = asString(objectName);
+
+            if (!name) {
+                return "";
+            }
+
+            try {
+                const state = asPayloadRecord(
+                    await options.context.coms.invoke(
+                        "base-app:callDialogExternal",
+                        QCA_EXTERNAL_CALLS.GET_FILTER_STATE,
+                        { dataset: name }
+                    )
+                );
+                const command = asString(state.command);
+
+                return command || name;
+            } catch {
+                // Nothing answers that call yet, so the object keeps its name.
+                return name;
+            }
+        });
+    }
+
     const baseBindObjects = options.api.bindObjects;
 
     if (typeof baseBindObjects === "function") {

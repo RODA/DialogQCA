@@ -67,92 +67,103 @@ const syncTruthTableSelections = () => {
   setSelected(c_conditions, conditions);
 };
 
-const buildCommand = () => {
-  const source_name = selected_source || (source_mode === 'tt' ? '<tt>' : '<dataset>');
-  const prefix = isChecked(assign) && result_name ? result_name + ' <- ' : '';
-  const header = prefix + 'minimize(' + source_name;
-  const mandatory_args = [];
-  const optional_args = [];
+// Optional arguments share lines up to this width, so a command with many
+// settings stays compact instead of running down the screen.
+const PACKED_WIDTH = 75;
 
-  if (source_mode === 'data') {
-    if (selected_outcome) {
-      mandatory_args.push('outcome = \"' + (isChecked(neg_out) ? '~' : '') + selected_outcome + '\"');
+const packArguments = (args) => {
+  const lines = [];
+
+  args.forEach((arg) => {
+    const last = lines.length ? lines[lines.length - 1] : '';
+    const joined = last ? last + ', ' + arg : arg;
+
+    if (last && joined.length <= PACKED_WIDTH) {
+      lines[lines.length - 1] = joined;
+    } else {
+      lines.push(arg);
     }
-    if (selected_conditions.length) {
-      mandatory_args.push('conditions = \"' + selected_conditions.join(', ') + '\"');
-    }
-    if (isChecked(checkbox1)) optional_args.push('use.letters = TRUE');
+  });
 
-    const incl_1_value = String(getValue(incl_1) || '').trim() || '1';
-    const incl_0_value = String(getValue(incl_0) || '').trim();
-    if (incl_1_value !== '1') {
-      if (!incl_0_value) optional_args.push('incl.cut = ' + incl_1_value);
-      else optional_args.push('incl.cut = \"' + incl_1_value + ', ' + incl_0_value + '\"');
-    }
+  return lines;
+};
 
-    const pri_cut_value = String(getValue(pri_cut) || '').trim();
-    if (pri_cut_value && pri_cut_value !== '0') optional_args.push('pri.cut = ' + pri_cut_value);
+// Minimizing a dataset needs to be told what to explain; minimizing a truth
+// table already knows, because the truth table carries it.
+const datasetArguments = () => {
+  if (source_mode !== 'data') return { mandatory: [], optional: [] };
 
-    const n_cut_value = String(getValue(n_cut) || '').trim() || '1';
-    if (n_cut_value !== '1') optional_args.push('n.cut = ' + n_cut_value);
+  const mandatory = [];
+  const optional = [];
+
+  if (selected_outcome) {
+    mandatory.push('outcome = "' + (isChecked(neg_out) ? '~' : '') + selected_outcome + '"');
   }
 
+  if (selected_conditions.length) {
+    mandatory.push('conditions = "' + selected_conditions.join(', ') + '"');
+  }
+
+  if (isChecked(checkbox1)) optional.push('use.letters = TRUE');
+
+  const incl_1_value = String(getValue(incl_1) || '').trim() || '1';
+  const incl_0_value = String(getValue(incl_0) || '').trim();
+  if (incl_1_value !== '1') {
+    optional.push(incl_0_value
+      ? 'incl.cut = "' + incl_1_value + ', ' + incl_0_value + '"'
+      : 'incl.cut = ' + incl_1_value);
+  }
+
+  const pri_cut_value = String(getValue(pri_cut) || '').trim();
+  if (pri_cut_value && pri_cut_value !== '0') optional.push('pri.cut = ' + pri_cut_value);
+
+  const n_cut_value = String(getValue(n_cut) || '').trim() || '1';
+  if (n_cut_value !== '1') optional.push('n.cut = ' + n_cut_value);
+
+  return { mandatory, optional };
+};
+
+const buildCommand = () => {
+  const source_name = selected_source || (source_mode === 'tt' ? '<tt>' : '<dataset>');
+  const from_dataset = datasetArguments();
+
+  // Only the settings that differ from the R defaults are written out.
+  const optional = from_dataset.optional.slice();
+
   const include_values = getIncludeValues();
-  if (include_values.length) optional_args.push('include = \"' + include_values.join(', ') + '\"');
+  if (include_values.length) optional.push('include = "' + include_values.join(', ') + '"');
 
   const directional_expectations = String(getValue(input4) || '').trim();
   if (directional_expectations && include_values.includes('?')) {
-    optional_args.push('dir.exp = \"' + directional_expectations + '\"');
+    optional.push('dir.exp = "' + directional_expectations + '"');
   }
 
-  if (isChecked(show_details)) optional_args.push('details = TRUE');
-  if (isChecked(max_sol)) optional_args.push('all.sol = TRUE');
-  if (isChecked(row_dom)) optional_args.push('row.dom = TRUE');
+  if (isChecked(show_details)) optional.push('details = TRUE');
+  if (isChecked(max_sol)) optional.push('all.sol = TRUE');
+  if (isChecked(row_dom)) optional.push('row.dom = TRUE');
 
   const pi_cons = String(getValue(input3) || '').trim() || '0';
-  if (pi_cons !== '0') optional_args.push('pi.cons = ' + pi_cons);
+  if (pi_cons !== '0') optional.push('pi.cons = ' + pi_cons);
 
   const pi_depth_value = Math.max(0, (Number(getValue(pi_depth)) || 1) - 1);
-  if (pi_depth_value > 0) optional_args.push('pi.depth = ' + pi_depth_value);
+  if (pi_depth_value > 0) optional.push('pi.depth = ' + pi_depth_value);
 
   const sol_cons = String(getValue(input2) || '').trim() || '0';
-  if (sol_cons !== '0') optional_args.push('sol.cons = ' + sol_cons);
+  if (sol_cons !== '0') optional.push('sol.cons = ' + sol_cons);
 
   const sol_cov = String(getValue(input1) || '').trim() || '1';
-  if (sol_cov !== '1') optional_args.push('sol.cov = ' + sol_cov);
+  if (sol_cov !== '1') optional.push('sol.cov = ' + sol_cov);
 
   const sol_depth_value = Math.max(0, (Number(getValue(sol_depth)) || 1) - 1);
-  if (sol_depth_value > 0) optional_args.push('sol.depth = ' + sol_depth_value);
+  if (sol_depth_value > 0) optional.push('sol.depth = ' + sol_depth_value);
 
-  const all_args = mandatory_args.concat(optional_args);
-  if (!all_args.length) return header + ')\n';
+  const command = call('minimize', [
+    source_name,
+    from_dataset.mandatory,
+    packArguments(optional)
+  ]);
 
-  const lines = [header + ','];
-  mandatory_args.forEach((arg) => {
-    lines.push('  ' + arg + ',');
-  });
-
-  const packed = [];
-  optional_args.forEach((arg) => {
-    if (!packed.length) {
-      packed.push(arg);
-      return;
-    }
-    const candidate = packed[packed.length - 1] + ', ' + arg;
-    if (candidate.length > 75) packed.push(arg);
-    else packed[packed.length - 1] = candidate;
-  });
-
-  packed.forEach((line, index) => {
-    lines.push('  ' + line + (index === packed.length - 1 ? '' : ','));
-  });
-
-  if (!optional_args.length && lines.length > 1) {
-    lines[lines.length - 1] = lines[lines.length - 1].replace(/,$/, '');
-  }
-
-  lines.push(')');
-  return lines.join('\n') + '\n';
+  return (isChecked(assign) && result_name ? result_name + ' <- ' : '') + command;
 };
 
 const refresh = () => {

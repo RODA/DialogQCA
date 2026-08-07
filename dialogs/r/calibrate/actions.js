@@ -99,48 +99,30 @@ onClick(checkbox_findth, () => {
   }, 0);
 });
 
-onChange(checkbox_jitter, () => {
-  callExternal('qca.syncCalibrateDialog', { ...calibrate_dialog, event: 'refresh' });
+// Most controls just ask the host to redraw with the current settings; a few
+// tell it which part of the dialog moved.
+const syncCalibrate = (event) => () => callExternal('qca.syncCalibrateDialog', {
+  ...calibrate_dialog,
+  event: event
 });
 
-onChange(checkbox_new_condition, () => {
-  callExternal('qca.syncCalibrateDialog', { ...calibrate_dialog, event: 'refresh' });
-});
+const refreshCalibrate = syncCalibrate('refresh');
+const thresholdChanged = syncCalibrate('thresholdInput');
 
-onChange(i_newvar, () => {
-  callExternal('qca.syncCalibrateDialog', { ...calibrate_dialog, event: 'refresh' });
-});
+onChange(checkbox_jitter, refreshCalibrate);
+onChange(checkbox_new_condition, refreshCalibrate);
+onChange(i_newvar, refreshCalibrate);
 
-onChange(i_idm, () => {
-  callExternal('qca.syncCalibrateDialog', { ...calibrate_dialog, event: 'idm' });
-});
+onChange(i_idm, syncCalibrate('idm'));
+onChange(i_above, syncCalibrate('above'));
+onChange(i_below, syncCalibrate('below'));
 
-onChange(i_above, () => {
-  callExternal('qca.syncCalibrateDialog', { ...calibrate_dialog, event: 'above' });
-});
-
-onChange(i_below, () => {
-  callExternal('qca.syncCalibrateDialog', { ...calibrate_dialog, event: 'below' });
-});
-
-onChange(i_th1, () => {
-  callExternal('qca.syncCalibrateDialog', { ...calibrate_dialog, event: 'thresholdInput' });
-});
-onChange(i_th2, () => {
-  callExternal('qca.syncCalibrateDialog', { ...calibrate_dialog, event: 'thresholdInput' });
-});
-onChange(i_th3, () => {
-  callExternal('qca.syncCalibrateDialog', { ...calibrate_dialog, event: 'thresholdInput' });
-});
-onChange(i_th4, () => {
-  callExternal('qca.syncCalibrateDialog', { ...calibrate_dialog, event: 'thresholdInput' });
-});
-onChange(i_th5, () => {
-  callExternal('qca.syncCalibrateDialog', { ...calibrate_dialog, event: 'thresholdInput' });
-});
-onChange(i_th6, () => {
-  callExternal('qca.syncCalibrateDialog', { ...calibrate_dialog, event: 'thresholdInput' });
-});
+onChange(i_th1, thresholdChanged);
+onChange(i_th2, thresholdChanged);
+onChange(i_th3, thresholdChanged);
+onChange(i_th4, thresholdChanged);
+onChange(i_th5, thresholdChanged);
+onChange(i_th6, thresholdChanged);
 
 onClick(b_run, async () => {
   const command = await callExternal('qca.validateCalibrateDialog', calibrate_dialog);

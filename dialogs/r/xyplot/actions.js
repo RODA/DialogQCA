@@ -46,30 +46,18 @@ onChange(c_y, () => {
   callExternal('qca.syncXYPlotDialog', { ...xyplot_dialog, event: 'y' });
 });
 
-onChange(radiogroup1, () => {
-  callExternal('qca.syncXYPlotDialog', { ...xyplot_dialog, event: 'refresh' });
+// Every one of these settings only changes how the plot is drawn.
+const refreshPlot = () => callExternal('qca.syncXYPlotDialog', {
+  ...xyplot_dialog,
+  event: 'refresh'
 });
-onChange(neg_x, () => {
-  callExternal('qca.syncXYPlotDialog', { ...xyplot_dialog, event: 'refresh' });
-});
-onChange(neg_y, () => {
-  callExternal('qca.syncXYPlotDialog', { ...xyplot_dialog, event: 'refresh' });
-});
-onChange(pof, () => {
-  callExternal('qca.syncXYPlotDialog', { ...xyplot_dialog, event: 'refresh' });
-});
-onChange(guides, () => {
-  callExternal('qca.syncXYPlotDialog', { ...xyplot_dialog, event: 'refresh' });
-});
-onChange(fill, () => {
-  callExternal('qca.syncXYPlotDialog', { ...xyplot_dialog, event: 'refresh' });
-});
-onChange(jitter, () => {
-  callExternal('qca.syncXYPlotDialog', { ...xyplot_dialog, event: 'refresh' });
-});
-onChange(cases, () => {
-  callExternal('qca.syncXYPlotDialog', { ...xyplot_dialog, event: 'refresh' });
-});
-onChange(rotate, () => {
-  callExternal('qca.syncXYPlotDialog', { ...xyplot_dialog, event: 'refresh' });
-});
+
+onChange(radiogroup1, refreshPlot);
+onChange(neg_x, refreshPlot);
+onChange(neg_y, refreshPlot);
+onChange(pof, refreshPlot);
+onChange(guides, refreshPlot);
+onChange(fill, refreshPlot);
+onChange(jitter, refreshPlot);
+onChange(cases, refreshPlot);
+onChange(rotate, refreshPlot);

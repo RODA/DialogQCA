@@ -22,11 +22,16 @@ export const QCA_EXTERNAL_CALLS = Object.freeze({
     SYNC_XYPLOT_DIALOG: "qca.syncXYPlotDialog",
     RENDER_VENN: "qca.renderVenn",
     INIT_VENN_DIALOG: "qca.initializeVennDialog",
-    SYNC_VENN_DIALOG: "qca.syncVennDialog"
+    SYNC_VENN_DIALOG: "qca.syncVennDialog",
+
+    // Reserved for a future "filter cases" feature. Nothing answers this yet,
+    // and the object reference resolver falls back to the plain object name
+    // until something does.
+    GET_FILTER_STATE: "filter:getState"
 });
 
 
-export const createQcaExternalInvoker = function(context: ProfileCustomJSContext) {
+export const createExternalInvoker = function(context: ProfileCustomJSContext) {
     return async function(
         name: string,
         parameters: Record<string, unknown> = {}

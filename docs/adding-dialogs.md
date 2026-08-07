@@ -87,12 +87,14 @@ For a new provider-bucket dialog:
     "label": "Example dialog",
     "owner": "products/DialogQCA",
     "targetHome": "products/DialogQCA/dialogs/r/exampleDialog/",
-    "sourceReference": "DialogCreator package or source note",
     "sourceFile": "r/exampleDialog/dialog.json",
     "status": "source-imported",
     "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime."
 }
 ```
+
+`sourceFile` is the only path here that is resolved, and it is relative to the
+`dialogs/` directory.
 
 ## Menu Placement
 

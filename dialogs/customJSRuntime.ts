@@ -9,17 +9,17 @@ import {
     createCalibrateThresholdController
 } from "../external/r/calibrateThresholds";
 import {
-    createQcaDataAccess
+    createDataAccess
 } from "../external/r/dataAccess";
 import {
-    createQcaDialogUi
+    createDialogUi
 } from "../external/r/dialogUi";
 import {
-    createQcaExternalInvoker,
+    createExternalInvoker,
     QCA_EXTERNAL_CALLS
 } from "../external/r/externalCalls";
 import {
-    registerQcaObjectBindings
+    registerObjectBindings
 } from "../external/r/objectBindings";
 import type {
     DialogQcaRuntimeApi
@@ -119,9 +119,9 @@ export const extendCustomJSApi = async function(
         return;
     }
 
-    const invoke = createQcaExternalInvoker(context);
-    const dataAccess = createQcaDataAccess(context);
-    const dialogUi = createQcaDialogUi(runtimeApi, context);
+    const invoke = createExternalInvoker(context);
+    const dataAccess = createDataAccess(context);
+    const dialogUi = createDialogUi(runtimeApi, context);
     const thresholds = createCalibrateThresholdController(runtimeApi);
     const truthTables = createTruthTableAccess({
         api: runtimeApi,
@@ -157,7 +157,7 @@ export const extendCustomJSApi = async function(
     let vennWorkspaceWatcherAttached = false;
 
     truthTables.registerObjectSource();
-    registerQcaObjectBindings({
+    registerObjectBindings({
         api,
         runtimeApi,
         context,

@@ -86,7 +86,7 @@ const hasDatasetTypeFlags = function(value: unknown): boolean {
 };
 
 
-export const createQcaDataAccess = function(context: ProfileCustomJSContext) {
+export const createDataAccess = function(context: ProfileCustomJSContext) {
     const getCachedDataset = function(dataset: string): Record<string, unknown> {
         return asPayloadRecord(context.objects?.dataframes?.[dataset]);
     };
