@@ -108,6 +108,78 @@ const registerRuntimeProxyCalls = function(options: {
 };
 
 
+const XY_PLOT_TOOLBAR_LABELS: Record<string, {
+    guides: string;
+    fill: string;
+    jitter: string;
+    labels: string;
+    rotation: string;
+}> = {
+    "Condition X:": {
+        guides: "Guides",
+        fill: "Fill",
+        jitter: "Jitter",
+        labels: "Labels",
+        rotation: "Rotate case labels"
+    },
+    "Bedingung X:": {
+        guides: "Hilfslinien",
+        fill: "Füllen",
+        jitter: "Jitter",
+        labels: "Beschriftungen",
+        rotation: "Beschriftungen drehen"
+    },
+    "Condition X :": {
+        guides: "Repères",
+        fill: "Remplir",
+        jitter: "Jitter",
+        labels: "Étiquettes",
+        rotation: "Faire pivoter les étiquettes"
+    },
+    "Warunek X:": {
+        guides: "Linie pomocnicze",
+        fill: "Wypełnij",
+        jitter: "Rozproszenie",
+        labels: "Etykiety",
+        rotation: "Obróć etykiety"
+    },
+    "Condición X:": {
+        guides: "Guías",
+        fill: "Rellenar",
+        jitter: "Dispersión",
+        labels: "Etiquetas",
+        rotation: "Rotar etiquetas"
+    },
+    "Condiția X:": {
+        guides: "Ghidaje",
+        fill: "Umple",
+        jitter: "Dispersie",
+        labels: "Etichete",
+        rotation: "Rotește etichetele"
+    },
+    "Συνθήκη X:": {
+        guides: "Οδηγοί",
+        fill: "Γέμισμα",
+        jitter: "Διασπορά",
+        labels: "Ετικέτες",
+        rotation: "Περιστροφή ετικετών"
+    }
+};
+
+
+const getXYPlotToolbarLabels = function(
+    api: DialogQcaRuntimeApi,
+    localeMarker: string
+) {
+    const node = api.getElementNode?.(localeMarker);
+    const marker = asString(api.getValue?.(localeMarker))
+        || (node instanceof HTMLElement ? asString(node.textContent) : "");
+
+    return XY_PLOT_TOOLBAR_LABELS[marker]
+        || XY_PLOT_TOOLBAR_LABELS["Condition X:"];
+};
+
+
 export const extendCustomJSApi = async function(
     api: ProfileCustomJSApi,
     context: ProfileCustomJSContext
@@ -142,6 +214,9 @@ export const extendCustomJSApi = async function(
     const xyPlot = createXYPlotDialogRuntime({
         api: runtimeApi,
         getDialogKey: dialogUi.getDialogKey,
+        getToolbarLabels: (localeMarker) => {
+            return getXYPlotToolbarLabels(runtimeApi, localeMarker);
+        },
         setVisible: dialogUi.setVisible,
         setLabelWeight: dialogUi.setLabelWeight,
         getDatasetVariables: dataAccess.getDatasetVariables,

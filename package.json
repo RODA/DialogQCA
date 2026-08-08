@@ -7,6 +7,7 @@
         "check:build-ownership": "node scripts/check-build-ownership.js",
         "webr:library": "node scripts/download-webr-library.js",
         "verify:electron-dialog": "node tests/electron/verify-DialogQCA-dialog-window.js",
+        "verify:xyplot-performance": "node scripts/verify-xyplot-performance.js",
         "dev:web": "node scripts/run-dialogforge-web.js --replace-port",
         "build:web": "node scripts/run-dialogforge-web.js --build-only",
         "serve:web": "node scripts/run-dialogforge-web.js --no-build --replace-port",

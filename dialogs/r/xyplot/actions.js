@@ -9,12 +9,7 @@ const xyplot_dialog = {
   negateXCheckbox: neg_x,
   negateYCheckbox: neg_y,
   pofCheckbox: pof,
-  guidesCheckbox: guides,
-  fillCheckbox: fill,
-  jitterCheckbox: jitter,
-  casesCheckbox: cases,
-  rotateInput: rotate,
-  rotateLabel: label7,
+  localeMarker: label2,
   xAxisLabel: xaxis_label,
   yAxisLabel: yaxis_label,
   measureLabels: [label15, label17, label19],
@@ -56,8 +51,3 @@ onChange(radiogroup1, refreshPlot);
 onChange(neg_x, refreshPlot);
 onChange(neg_y, refreshPlot);
 onChange(pof, refreshPlot);
-onChange(guides, refreshPlot);
-onChange(fill, refreshPlot);
-onChange(jitter, refreshPlot);
-onChange(cases, refreshPlot);
-onChange(rotate, refreshPlot);

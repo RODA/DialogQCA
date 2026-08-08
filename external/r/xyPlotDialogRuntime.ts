@@ -6,6 +6,10 @@ import {
     asString,
     firstSelected
 } from "./runtimeApi";
+import {
+    renderXYPlot,
+    type QcaXYPlotRenderPoint
+} from "../../qca/xyPlotRenderer";
 
 
 interface XYPlotDialogConfig {
@@ -19,12 +23,7 @@ interface XYPlotDialogConfig {
     negateXCheckbox: string;
     negateYCheckbox: string;
     pofCheckbox: string;
-    guidesCheckbox: string;
-    fillCheckbox: string;
-    jitterCheckbox: string;
-    casesCheckbox: string;
-    rotateInput: string;
-    rotateLabel: string;
+    localeMarker: string;
     xAxisLabel: string;
     yAxisLabel: string;
     measureLabels: string[];
@@ -50,7 +49,11 @@ interface XYPlotDialogState {
     plotData: XYPlotData | null;
     plotLoading: boolean;
     plotRequestKey: string;
-    jitterEnabled: boolean;
+    showGuides: boolean;
+    fillPoints: boolean;
+    jitterPoints: boolean;
+    showCases: boolean;
+    caseLabelRotation: number;
     jitterOffsets: {
         x: number[];
         y: number[];
@@ -71,6 +74,13 @@ interface XYPlotDialogOptions {
         variable: string
     ) => Promise<unknown>;
     listDatasetColumns: (dataset: string) => string[];
+    getToolbarLabels: (localeMarker: string) => {
+        guides: string;
+        fill: string;
+        jitter: string;
+        labels: string;
+        rotation: string;
+    };
     invoke: (
         channel: string,
         payload?: Record<string, unknown>
@@ -116,7 +126,11 @@ const createInitialState = function(): XYPlotDialogState {
         plotData: null,
         plotLoading: false,
         plotRequestKey: "",
-        jitterEnabled: false,
+        showGuides: true,
+        fillPoints: true,
+        jitterPoints: false,
+        showCases: false,
+        caseLabelRotation: 0,
         jitterOffsets: {
             x: [],
             y: []
@@ -132,6 +146,53 @@ export const createXYPlotDialogRuntime = function(options: XYPlotDialogOptions) 
     let pendingPlotRedraw = 0;
     let drawnPlotWidth = 0;
     let drawnPlotHeight = 0;
+
+    const removeCommandActions = function(): void {
+        document.getElementById("dialogQuickActionsHotspot")?.remove();
+        document.getElementById("dialogQuickActions")?.remove();
+    };
+
+    const guardInitialControlFocus = function(controlName: string): void {
+        let releaseTimer = 0;
+        const control = options.api.getElementNode?.(controlName);
+
+        if (!(control instanceof HTMLElement)) {
+            return;
+        }
+
+        const clearIfFocused = function(): void {
+            const active = document.activeElement;
+
+            if (
+                active instanceof HTMLElement
+                && (active === control || control.contains(active))
+            ) {
+                active.blur();
+            }
+        };
+        const cleanup = function(): void {
+            document.removeEventListener("focusin", handleFocus, true);
+            document.removeEventListener("pointerdown", cleanup, true);
+            document.removeEventListener("keydown", cleanup, true);
+            window.clearTimeout(releaseTimer);
+        };
+        const handleFocus = function(event: FocusEvent): void {
+            const target = event.target;
+
+            if (
+                target instanceof HTMLElement
+                && (target === control || control.contains(target))
+            ) {
+                target.blur();
+            }
+        };
+
+        document.addEventListener("focusin", handleFocus, true);
+        document.addEventListener("pointerdown", cleanup, true);
+        document.addEventListener("keydown", cleanup, true);
+        releaseTimer = window.setTimeout(cleanup, 5000);
+        clearIfFocused();
+    };
 
     const getConfig = function(payload: unknown): XYPlotDialogConfig {
         const source = asPayloadRecord(payload);
@@ -150,12 +211,7 @@ export const createXYPlotDialogRuntime = function(options: XYPlotDialogOptions) 
             negateXCheckbox: asString(source.negateXCheckbox),
             negateYCheckbox: asString(source.negateYCheckbox),
             pofCheckbox: asString(source.pofCheckbox),
-            guidesCheckbox: asString(source.guidesCheckbox),
-            fillCheckbox: asString(source.fillCheckbox),
-            jitterCheckbox: asString(source.jitterCheckbox),
-            casesCheckbox: asString(source.casesCheckbox),
-            rotateInput: asString(source.rotateInput),
-            rotateLabel: asString(source.rotateLabel),
+            localeMarker: asString(source.localeMarker),
             xAxisLabel: asString(source.xAxisLabel),
             yAxisLabel: asString(source.yAxisLabel),
             measureLabels: readNames(source.measureLabels),
@@ -282,7 +338,7 @@ export const createXYPlotDialogRuntime = function(options: XYPlotDialogOptions) 
         tooltip.style.top = `${Math.max(8, top)}px`;
     };
 
-    const renderPlot = function(
+    const renderLegacyPlot = function(
         config: XYPlotDialogConfig,
         state: XYPlotDialogState
     ): void {
@@ -390,7 +446,7 @@ export const createXYPlotDialogRuntime = function(options: XYPlotDialogOptions) 
             svg.appendChild(createSvgElement("line", attributes));
         });
 
-        if (options.api.isChecked?.(config.guidesCheckbox)) {
+        if (state.showGuides) {
             svg.appendChild(createSvgElement("line", {
                 x1: squareLeft,
                 y1: squareTop + squareSize / 2,
@@ -473,11 +529,9 @@ export const createXYPlotDialogRuntime = function(options: XYPlotDialogOptions) 
             return;
         }
 
-        const fillOpacity = options.api.isChecked?.(config.fillCheckbox) ? 1 : 0;
-        const showLabels = options.api.isChecked?.(config.casesCheckbox) === true;
-        const rotation = Math.round(
-            (Number(options.api.getValue?.(config.rotateInput)) || 0) * 45
-        );
+        const fillOpacity = state.fillPoints ? 1 : 0;
+        const showLabels = state.showCases;
+        const rotation = state.caseLabelRotation;
         const pointCount = Math.min(
             xValues.length,
             yValues.length,
@@ -499,12 +553,12 @@ export const createXYPlotDialogRuntime = function(options: XYPlotDialogOptions) 
                 ? rawY
                 : 1 - rawY;
             const x = plotLeft + plotSize * xValue + (
-                options.api.isChecked?.(config.jitterCheckbox)
+                state.jitterPoints
                     ? state.jitterOffsets.x[index] || 0
                     : 0
             );
             const y = plotTop + plotSize * yValue + (
-                options.api.isChecked?.(config.jitterCheckbox)
+                state.jitterPoints
                     ? state.jitterOffsets.y[index] || 0
                     : 0
             );
@@ -554,6 +608,117 @@ export const createXYPlotDialogRuntime = function(options: XYPlotDialogOptions) 
             svg.appendChild(group);
         }
     };
+
+    const renderPlot = function(
+        config: XYPlotDialogConfig,
+        state: XYPlotDialogState
+    ): void {
+        const host = options.api.getElementNode?.(config.plot);
+
+        if (!(host instanceof HTMLElement)) {
+            return;
+        }
+
+        const xValues = asValueArray(state.plotData?.x);
+        const yValues = asValueArray(state.plotData?.y);
+        const labels = asValueArray(state.plotData?.labels);
+        const pointCount = Math.min(
+            xValues.length,
+            yValues.length,
+            labels.length || Math.min(xValues.length, yValues.length)
+        );
+        const negateX = options.api.isChecked?.(config.negateXCheckbox) === true;
+        const negateY = options.api.isChecked?.(config.negateYCheckbox) === true;
+        const necessity = options.api.isChecked?.(config.necessityRadio) === true;
+        const points: QcaXYPlotRenderPoint[] = [];
+        let fitLabels: string[] = [];
+
+        if (
+            options.api.isChecked?.(config.pofCheckbox) === true
+            && state.plotData
+            && state.selectedX
+            && state.selectedY
+        ) {
+            const bucket = necessity
+                ? state.plotData.necessity
+                : state.plotData.sufficiency;
+            const index = (negateX ? 1 : 0) + (negateY ? 2 : 0);
+            const row = Array.isArray(bucket) ? bucket[index] : null;
+
+            if (Array.isArray(row) && row.length >= 3) {
+                fitLabels = [
+                    `Inclusion: ${String(row[0] || "")}`.trim(),
+                    `Coverage: ${String(row[1] || "")}`.trim(),
+                    `${necessity ? "Relevance:" : "PRI:"} ${String(row[2] || "")}`.trim()
+                ];
+            }
+        }
+
+        for (let index = 0; index < pointCount; index += 1) {
+            const rawX = Number(xValues[index]);
+            const rawY = Number(yValues[index]);
+
+            if (!Number.isFinite(rawX) || !Number.isFinite(rawY)) {
+                continue;
+            }
+
+            points.push({
+                x: negateX ? 1 - rawX : rawX,
+                y: negateY ? 1 - rawY : rawY,
+                label: asString(labels[index]),
+                jitterX: state.jitterOffsets.x[index] || 0,
+                jitterY: state.jitterOffsets.y[index] || 0
+            });
+        }
+
+        renderXYPlot(host, {
+            points,
+            xAxisLabel: state.selectedX.toUpperCase(),
+            yAxisLabel: state.selectedY.toUpperCase(),
+            fitLabels,
+            showGuides: state.showGuides,
+            showCases: state.showCases,
+            showAxisLabels: false,
+            showFitLabels: false,
+            fillPoints: state.fillPoints,
+            jitterPoints: state.jitterPoints,
+            caseLabelRotation: state.caseLabelRotation,
+            toolbarLabels: options.getToolbarLabels(config.localeMarker),
+            onGuidesChange: (active) => {
+                state.showGuides = active;
+                renderPlot(config, state);
+            },
+            onFillChange: (active) => {
+                state.fillPoints = active;
+                renderPlot(config, state);
+            },
+            onJitterChange: (active) => {
+                if (active && !state.jitterPoints) {
+                    rebuildJitter(state);
+                }
+                state.jitterPoints = active;
+                renderPlot(config, state);
+            },
+            onLabelsChange: (active) => {
+                state.showCases = active;
+                renderPlot(config, state);
+            },
+            onLabelRotationChange: (value) => {
+                state.caseLabelRotation = Math.round(value * 45);
+                renderPlot(config, state);
+            },
+            dataKey: [
+                state.selectedDataset,
+                state.selectedX,
+                state.selectedY,
+                negateX ? "negated-x" : "x",
+                negateY ? "negated-y" : "y"
+            ].join("::"),
+            loading: state.plotLoading
+        });
+    };
+
+    void renderLegacyPlot;
 
     const redrawPlotForHostSize = function(
         host: HTMLElement,
@@ -606,10 +771,6 @@ export const createXYPlotDialogRuntime = function(options: XYPlotDialogOptions) 
         config: XYPlotDialogConfig,
         state: XYPlotDialogState
     ): void {
-        const showRotation = options.api.isChecked?.(config.casesCheckbox) === true;
-
-        options.setVisible(config.rotateInput, showRotation);
-        options.setVisible(config.rotateLabel, showRotation);
         options.api.setValue?.(config.xAxisLabel, state.selectedX.toUpperCase());
         options.api.setValue?.(config.yAxisLabel, state.selectedY.toUpperCase());
         options.setVisible(config.xAxisLabel, !!state.selectedX);
@@ -711,7 +872,6 @@ export const createXYPlotDialogRuntime = function(options: XYPlotDialogOptions) 
             ? result as XYPlotData
             : null;
         rebuildJitter(state);
-        state.jitterEnabled = options.api.isChecked?.(config.jitterCheckbox) === true;
         refresh(config, state);
     };
 
@@ -736,12 +896,15 @@ export const createXYPlotDialogRuntime = function(options: XYPlotDialogOptions) 
     };
 
     const synchronize = async function(payload: unknown): Promise<null> {
+        removeCommandActions();
+
         const config = getConfig(payload);
         const state = getState(config.dialogKey);
         const event = config.event || "refresh";
 
         if (event === "init") {
             Object.assign(state, createInitialState());
+            guardInitialControlFocus(config.pofCheckbox);
             config.separators.forEach((name) => {
                 options.setVisible(name, false);
             });
@@ -794,13 +957,6 @@ export const createXYPlotDialogRuntime = function(options: XYPlotDialogOptions) 
             return null;
         }
 
-        const jitterEnabled = options.api.isChecked?.(config.jitterCheckbox) === true;
-
-        if (jitterEnabled && !state.jitterEnabled) {
-            rebuildJitter(state);
-        }
-
-        state.jitterEnabled = jitterEnabled;
         refresh(config, state);
 
         return null;
