@@ -274,9 +274,12 @@ const assertWorkflows = function() {
         return workflowText.includes("latest-mac.yml")
             && workflowText.includes("*.zip")
             && workflowText.includes("*.zip.blockmap")
-            && !workflowText.includes("*.dmg.blockmap");
+            && !workflowText.includes("*.dmg.blockmap")
+            && workflowText.includes("must all exist before release cleanup")
+            && workflowText.includes("gh release delete-asset")
+            && workflowText.includes("assets=(\"${dmgs[@]}\" \"${zips[@]}\" \"${blockmaps[@]}\" \"${latest_files[@]}\")");
     })) {
-        fail("macOS release workflows must upload electron-updater metadata.");
+        fail("macOS release workflows must validate outputs, clear stale assets, and upload updater metadata.");
     }
 };
 

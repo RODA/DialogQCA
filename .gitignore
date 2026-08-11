@@ -5,3 +5,4 @@ tests/
 .DS_Store
 library/R/library.data.gz
 library/R/library.js.metadata
+internal/
