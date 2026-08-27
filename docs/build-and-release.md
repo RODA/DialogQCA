@@ -53,6 +53,9 @@ DialogQCA, the current values are `linuxIntel=li`, `windowsIntel=wi`,
 repo-specific examples for this product; other products or forks can use
 different values.
 
+DialogQCA's WebR VFS is owned by the `web` release in `RODA/DialogQCA`. Product
+builds and the `webr:library` command must use that release directly.
+
 Set `DIALOGFORGE_ROOT` when DialogForge is not a sibling checkout.
 
 ## CI Builds

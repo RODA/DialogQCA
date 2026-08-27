@@ -7,7 +7,6 @@ const {
     writeRPackageManifest
 } = require("./generate-r-package-manifest");
 
-const releaseRepository = "RODA/DialogQCA";
 const productRoot = path.resolve(__dirname, "..");
 const libraryDir = path.join(productRoot, "library", "R");
 const assets = [
@@ -15,22 +14,30 @@ const assets = [
     "library.js.metadata"
 ];
 
-const readReleaseTag = function() {
+const readReleaseConfiguration = function() {
     const packageJson = JSON.parse(
         fs.readFileSync(path.join(productRoot, "package.json"), "utf8")
     );
-    const releaseTags = packageJson.product && typeof packageJson.product === "object"
-        ? packageJson.product.releaseTags
-        : null;
-    const releaseTag = String(releaseTags?.webrVFS || "").trim();
+    const product = packageJson.product && typeof packageJson.product === "object"
+        ? packageJson.product
+        : {};
+    const library = product.webRPackageLibrary
+        && typeof product.webRPackageLibrary === "object"
+        ? product.webRPackageLibrary
+        : {};
+    const releaseRepository = String(library.releaseRepository || "").trim();
+    const releaseTag = String(
+        library.releaseTag || product.releaseTags?.webrVFS || ""
+    ).trim();
 
-    if (!releaseTag) {
+    if (!releaseRepository || !releaseTag) {
         throw new Error(
-            "Missing package.json product.releaseTags.webrVFS."
+            "Missing package.json product.webRPackageLibrary "
+                + "releaseRepository or releaseTag."
         );
     }
 
-    return releaseTag;
+    return { releaseRepository, releaseTag };
 };
 
 const httpsGet = function(sourceUrl, headers = {}) {
@@ -59,9 +66,11 @@ const httpsGet = function(sourceUrl, headers = {}) {
     });
 };
 
-const readReleaseAssets = async function(releaseTag) {
+const readReleaseAssets = async function(configuration) {
+    const releaseTagUrl = encodeURIComponent(configuration.releaseTag);
     const response = await httpsGet(
-        `https://api.github.com/repos/${releaseRepository}/releases/tags/${encodeURIComponent(releaseTag)}`,
+        `https://api.github.com/repos/${configuration.releaseRepository}`
+            + `/releases/tags/${releaseTagUrl}`,
         {
             Accept: "application/vnd.github+json"
         }
@@ -70,7 +79,8 @@ const readReleaseAssets = async function(releaseTag) {
     if (response.statusCode !== 200) {
         response.resume();
         throw new Error(
-            `Could not read WebR package library release metadata for ${releaseTag}: HTTP ${response.statusCode}`
+            "Could not read WebR package library release metadata for "
+                + `${configuration.releaseTag}: HTTP ${response.statusCode}`
         );
     }
 
@@ -164,8 +174,8 @@ const touchDownloadedAsset = function(targetPath, asset) {
 const main = async function() {
     fs.mkdirSync(libraryDir, { recursive: true });
     const force = process.argv.includes("--force");
-    const releaseTag = readReleaseTag();
-    const releaseAssets = await readReleaseAssets(releaseTag);
+    const configuration = readReleaseConfiguration();
+    const releaseAssets = await readReleaseAssets(configuration);
 
     for (const assetName of assets) {
         const targetPath = path.join(libraryDir, assetName);
@@ -173,7 +183,8 @@ const main = async function() {
 
         if (!releaseAsset) {
             throw new Error(
-                `WebR package library release asset is missing from ${releaseTag}: ${assetName}`
+                "WebR package library release asset is missing from "
+                    + `${configuration.releaseTag}: ${assetName}`
             );
         }
 
@@ -184,12 +195,15 @@ const main = async function() {
 
         const url = String(releaseAsset.browser_download_url || "")
             || [
-                `https://github.com/${releaseRepository}/releases/download`,
-                encodeURIComponent(releaseTag),
+                `https://github.com/${configuration.releaseRepository}`
+                    + "/releases/download",
+                encodeURIComponent(configuration.releaseTag),
                 assetName
             ].join("/");
 
-        console.log(`Downloading ${assetName} from ${releaseTag}...`);
+        console.log(
+            `Downloading ${assetName} from ${configuration.releaseTag}...`
+        );
         await downloadFile(url, targetPath);
         touchDownloadedAsset(targetPath, releaseAsset);
     }
@@ -202,16 +216,20 @@ const main = async function() {
 };
 
 main().catch((error) => {
-    const configuredTag = (() => {
+    const configuration = (() => {
         try {
-            return readReleaseTag();
+            return readReleaseConfiguration();
         }
         catch {
-            return "(missing)";
+            return {
+                releaseRepository: "(missing)",
+                releaseTag: "(missing)"
+            };
         }
     })();
     console.error(
-        `WebR package library lookup expects release tag "${configuredTag}" in ${releaseRepository}.`
+        `WebR package library lookup expects release tag "${configuration.releaseTag}" `
+            + `in ${configuration.releaseRepository}.`
     );
     console.error(error instanceof Error ? error.message : String(error));
     process.exit(1);

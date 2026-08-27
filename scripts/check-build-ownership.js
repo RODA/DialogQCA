@@ -84,6 +84,8 @@ const assertLicenseMetadata = function(packageJson) {
 const assertAutoUpdatePolicy = function(packageJson) {
     const autoUpdate = (packageJson.product || {}).autoUpdate || {};
     const releaseTags = (packageJson.product || {}).releaseTags || {};
+    const webRPackageLibrary =
+        (packageJson.product || {}).webRPackageLibrary || {};
 
     if (Object.prototype.hasOwnProperty.call(autoUpdate, "releaseTag")) {
         fail("package.json product.autoUpdate must not pin a platform-specific releaseTag.");
@@ -94,6 +96,12 @@ const assertAutoUpdatePolicy = function(packageJson) {
         || releaseTags.macosSilicon !== "ms"
         || releaseTags.webrVFS !== "web") {
         fail("package.json product.releaseTags must define the DialogQCA release tags.");
+    }
+    if (webRPackageLibrary.releaseRepository !== "RODA/DialogQCA"
+        || webRPackageLibrary.releaseTag !== "web") {
+        fail(
+            "package.json product.webRPackageLibrary must use RODA/DialogQCA tag web."
+        );
     }
 };
 
@@ -194,8 +202,12 @@ const assertRequiredScripts = function() {
 
     const webrLibraryScript = fs.readFileSync(path.join(productRoot, "scripts/download-webr-library.js"), "utf8");
     [
-        'product.releaseTags.webrVFS',
-        'WebR package library lookup expects release tag "${configuredTag}"'
+        'product.webRPackageLibrary',
+        'library.releaseRepository',
+        'library.releaseTag',
+        'product.releaseTags?.webrVFS',
+        'WebR package library lookup expects release tag "${configuration.releaseTag}" ',
+        'in ${configuration.releaseRepository}.'
     ].forEach((expected) => {
         if (!webrLibraryScript.includes(expected)) {
             fail("scripts/download-webr-library.js must read the configured WebR release tag: " + expected);
