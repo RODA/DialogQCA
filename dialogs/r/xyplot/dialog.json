@@ -9,7 +9,14 @@
         "preserveAspectRatio": false,
         "language": "en_US",
         "fontSize": "12",
-        "runtimeProvider": "R"
+        "runtimeProvider": "R",
+        "rPackageRequirements": [
+            {
+                "name": "QCA",
+                "minimumVersion": "3.25",
+                "minimumVersionExclusive": true
+            }
+        ]
     },
     "syntax": {
         "command": "",

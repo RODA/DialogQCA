@@ -3,6 +3,34 @@
     "httpgd",
     "QCA"
   ],
+  "rPackageRequirements": [
+    {
+      "name": "admisc",
+      "minimumVersion": "0.41"
+    },
+    {
+      "name": "declared",
+      "minimumVersion": "0.27"
+    },
+    {
+      "name": "DDIwR",
+      "minimumVersion": "0.20"
+    },
+    {
+      "name": "QCA",
+      "minimumVersion": "3.25",
+      "minimumVersionExclusive": true
+    },
+    {
+      "name": "statistics",
+      "minimumVersion": "0.14",
+      "minimumVersionExclusive": true
+    },
+    {
+      "name": "venn",
+      "minimumVersion": "1.13"
+    }
+  ],
   "uiActionCommandVisibility": "hidden",
   "terminalSettings": {
     "startQuiet": true
@@ -19,8 +47,7 @@
       "jsonlite",
       "askpass",
       "later",
-      "digest",
-      "statistics"
+      "digest"
     ],
     "runiverse": [
       "admisc",
@@ -29,44 +56,75 @@
     ],
     "both": [
       "DDIwR",
-      "QCA"
+      "QCA",
+      "statistics"
     ]
   },
   "dialogRuntimeRequirements": {
     "recode": {
       "rPackages": [
-        "admisc"
+        {
+          "name": "admisc",
+          "minimumVersion": "0.41"
+        }
       ]
     },
     "calibrate": {
       "rPackages": [
-        "QCA"
+        {
+          "name": "QCA",
+          "minimumVersion": "3.25",
+          "minimumVersionExclusive": true
+        }
       ]
     },
     "minimize": {
       "rPackages": [
-        "QCA"
+        {
+          "name": "QCA",
+          "minimumVersion": "3.25",
+          "minimumVersionExclusive": true
+        }
       ]
     },
     "xyplot": {
       "rPackages": [
-        "QCA"
+        {
+          "name": "QCA",
+          "minimumVersion": "3.25",
+          "minimumVersionExclusive": true
+        }
       ]
     },
     "venn": {
       "rPackages": [
-        "QCA",
-        "venn"
+        {
+          "name": "QCA",
+          "minimumVersion": "3.25",
+          "minimumVersionExclusive": true
+        },
+        {
+          "name": "venn",
+          "minimumVersion": "1.13"
+        }
       ]
     },
     "truthTable": {
       "rPackages": [
-        "QCA"
+        {
+          "name": "QCA",
+          "minimumVersion": "3.25",
+          "minimumVersionExclusive": true
+        }
       ]
     },
     "incoherent": {
       "rPackages": [
-        "QCA"
+        {
+          "name": "QCA",
+          "minimumVersion": "3.25",
+          "minimumVersionExclusive": true
+        }
       ]
     }
   }

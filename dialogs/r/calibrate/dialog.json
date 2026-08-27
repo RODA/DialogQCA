@@ -9,7 +9,14 @@
         "fontSize": 12,
         "language": "en_US",
         "dependencies": "QCA",
-        "runtimeProvider": "R"
+        "runtimeProvider": "R",
+        "rPackageRequirements": [
+            {
+                "name": "QCA",
+                "minimumVersion": "3.25",
+                "minimumVersionExclusive": true
+            }
+        ]
     },
     "syntax": {
         "command": "",

@@ -6,7 +6,14 @@
         "targetHome": "products/DialogQCA/dialogs/r/calibrate/",
         "sourceFile": "r/calibrate/dialog.json",
         "status": "source-imported",
-        "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime."
+        "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime.",
+        "rPackages": [
+            {
+                "name": "QCA",
+                "minimumVersion": "3.25",
+                "minimumVersionExclusive": true
+            }
+        ]
     },
     {
         "id": "recode",
@@ -17,7 +24,10 @@
         "status": "source-imported",
         "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime.",
         "rPackages": [
-            "admisc"
+            {
+                "name": "admisc",
+                "minimumVersion": "0.41"
+            }
         ]
     },
     {
@@ -27,7 +37,14 @@
         "targetHome": "products/DialogQCA/dialogs/r/truthTable/",
         "sourceFile": "r/truthTable/dialog.json",
         "status": "source-imported",
-        "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime."
+        "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime.",
+        "rPackages": [
+            {
+                "name": "QCA",
+                "minimumVersion": "3.25",
+                "minimumVersionExclusive": true
+            }
+        ]
     },
     {
         "id": "incoherent",
@@ -36,7 +53,14 @@
         "targetHome": "products/DialogQCA/dialogs/r/incoherent/",
         "sourceFile": "r/incoherent/dialog.json",
         "status": "source-imported",
-        "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime."
+        "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime.",
+        "rPackages": [
+            {
+                "name": "QCA",
+                "minimumVersion": "3.25",
+                "minimumVersionExclusive": true
+            }
+        ]
     },
     {
         "id": "minimize",
@@ -45,7 +69,14 @@
         "targetHome": "products/DialogQCA/dialogs/r/minimize/",
         "sourceFile": "r/minimize/dialog.json",
         "status": "source-imported",
-        "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime."
+        "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime.",
+        "rPackages": [
+            {
+                "name": "QCA",
+                "minimumVersion": "3.25",
+                "minimumVersionExclusive": true
+            }
+        ]
     },
     {
         "id": "xyplot",
@@ -54,7 +85,14 @@
         "targetHome": "products/DialogQCA/dialogs/r/xyplot/",
         "sourceFile": "r/xyplot/dialog.json",
         "status": "source-imported",
-        "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime."
+        "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime.",
+        "rPackages": [
+            {
+                "name": "QCA",
+                "minimumVersion": "3.25",
+                "minimumVersionExclusive": true
+            }
+        ]
     },
     {
         "id": "venn",
@@ -63,6 +101,17 @@
         "targetHome": "products/DialogQCA/dialogs/r/venn/",
         "sourceFile": "r/venn/dialog.json",
         "status": "source-imported",
-        "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime."
+        "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime.",
+        "rPackages": [
+            {
+                "name": "QCA",
+                "minimumVersion": "3.25",
+                "minimumVersionExclusive": true
+            },
+            {
+                "name": "venn",
+                "minimumVersion": "1.13"
+            }
+        ]
     }
 ]

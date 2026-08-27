@@ -76,13 +76,29 @@ const verifyVersioningAndResolution = function() {
         compatibility.normalizeRPackageRequirements([
             { name: "statistics", minimumVersion: "0.13" },
             { name: "statistics", minimumVersion: "0.14" },
+            {
+                name: "statistics",
+                minimumVersion: "0.14",
+                minimumVersionExclusive: true
+            },
             { name: "admisc" }
         ]),
         [
-            { name: "statistics", minimumVersion: "0.14" },
+            {
+                name: "statistics",
+                minimumVersion: "0.14",
+                minimumVersionExclusive: true
+            },
             { name: "admisc" }
         ]
     );
+
+    assert.throws(() => {
+        compatibility.normalizeRPackageRequirements([{
+            name: "QCA",
+            minimumVersionExclusive: true
+        }]);
+    }, /requires minimumVersion/);
 
     const result = compatibility.resolveRPackageCompatibility([
         { name: "statistics", minimumVersion: "0.14" },
@@ -104,6 +120,23 @@ const verifyVersioningAndResolution = function() {
     assert.match(
         compatibility.createRPackageCompatibilityMessage(result),
         /statistics: requires 0\.14 or newer; installed 0\.13\./
+    );
+
+    const strictResult = compatibility.resolveRPackageCompatibility([{
+        name: "QCA",
+        minimumVersion: "3.25",
+        minimumVersionExclusive: true
+    }], {
+        schemaVersion: 1,
+        packages: {
+            QCA: { version: "3.25" }
+        }
+    });
+
+    assert.strictEqual(strictResult.compatible, false);
+    assert.match(
+        compatibility.createRPackageCompatibilityMessage(strictResult),
+        /QCA: requires a version newer than 3\.25; installed 3\.25\./
     );
 
     assert.deepStrictEqual(
@@ -132,6 +165,7 @@ const verifyRegistryAndManifest = function() {
             "utf8"
         )
     );
+    const compatibilityFailures = [];
 
     registry.forEach((dialog) => {
         assert.strictEqual(
@@ -156,17 +190,57 @@ const verifyRegistryAndManifest = function() {
         const requirements = compatibility.normalizeRPackageRequirements(
             dialog.rPackages || []
         );
+        const source = JSON.parse(fs.readFileSync(
+            path.join(productRoot, "dialogs", dialog.sourceFile),
+            "utf8"
+        ));
+        const sourceRequirements =
+            compatibility.normalizeRPackageRequirementsAtIngestion(
+                source.properties?.rPackageRequirements
+            );
+
+        assert.deepStrictEqual(
+            sourceRequirements,
+            requirements,
+            `${dialog.id} source requirements must match dialogs.json.`
+        );
         const result = compatibility.resolveRPackageCompatibility(
             requirements,
             installedManifest
         );
 
-        assert.strictEqual(
-            result.compatible,
-            true,
-            `${dialog.id} has unsatisfied package requirements:\n${compatibility.createRPackageCompatibilityMessage(result)}`
-        );
+        if (!result.compatible) {
+            compatibilityFailures.push(
+                `${dialog.id}:\n${compatibility.createRPackageCompatibilityMessage(result)}`
+            );
+        }
     });
+
+    const settings = JSON.parse(fs.readFileSync(
+        path.join(productRoot, "settings/settings.json"),
+        "utf8"
+    ));
+    const productRequirements =
+        compatibility.normalizeRPackageRequirementsAtIngestion(
+            settings.rPackageRequirements
+        );
+    const productResult = compatibility.resolveRPackageCompatibility(
+        productRequirements,
+        installedManifest
+    );
+
+    if (!productResult.compatible) {
+        compatibilityFailures.push(
+            `product runtime:\n${compatibility.createRPackageCompatibilityMessage(productResult)}`
+        );
+    }
+
+    if (compatibilityFailures.length > 0) {
+        throw new Error(
+            `The bundled WebR library does not satisfy ${productId}:\n\n`
+            + compatibilityFailures.join("\n\n")
+        );
+    }
 
     const metadataPath = path.join(libraryDir, "library.js.metadata");
     const dataPath = path.join(libraryDir, "library.data.gz");
@@ -202,7 +276,7 @@ const verifyProductRequirementSources = function() {
     const registryById = new Map(registry.map((dialog) => {
         return [dialog.id, dialog];
     }));
-    const assertDeclared = function(dialogId, packageNames, source) {
+    const assertDeclared = function(dialogId, packageRequirements, source) {
         const dialog = registryById.get(dialogId);
 
         assert.ok(dialog, `${source} references unknown dialog ${dialogId}.`);
@@ -212,10 +286,12 @@ const verifyProductRequirementSources = function() {
             ).map((requirement) => requirement.name)
         );
 
-        packageNames.forEach((packageName) => {
+        compatibility.normalizeRPackageRequirementsAtIngestion(
+            packageRequirements
+        ).forEach((packageRequirement) => {
             assert.ok(
-                declaredNames.has(packageName),
-                `${dialogId} must declare ${packageName} in dialogs.json because it is required by ${source}.`
+                declaredNames.has(packageRequirement.name),
+                `${dialogId} must declare ${packageRequirement.name} in dialogs.json because it is required by ${source}.`
             );
         });
     };

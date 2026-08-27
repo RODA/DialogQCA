@@ -7,7 +7,13 @@
         "height": "370",
         "language": "en_US",
         "fontSize": "12",
-        "runtimeProvider": "R"
+        "runtimeProvider": "R",
+        "rPackageRequirements": [
+            {
+                "name": "admisc",
+                "minimumVersion": "0.41"
+            }
+        ]
     },
     "syntax": {
         "command": "",
