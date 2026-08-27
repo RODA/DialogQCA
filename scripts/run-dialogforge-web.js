@@ -67,6 +67,12 @@ if (shouldBuild) {
             DIALOGFORGE_WEB_PRODUCT_PATH: productRoot
         })
     });
+
+    run(process.execPath, [
+        path.join(productRoot, "scripts/generate-r-package-manifest.js")
+    ], {
+        cwd: productRoot
+    });
 }
 
 const serverScript = path.join(

@@ -121,3 +121,25 @@ if (result.error) {
 if (result.status !== 0) {
     process.exit(result.status || 1);
 }
+
+[
+    "scripts/test-r-package-compatibility.js"
+].forEach((relativePath) => {
+    const verifier = spawnSync(
+        process.execPath,
+        [path.join(productRoot, relativePath)],
+        {
+            cwd: productRoot,
+            env: process.env,
+            stdio: "inherit"
+        }
+    );
+
+    if (verifier.error) {
+        throw verifier.error;
+    }
+
+    if (verifier.status !== 0) {
+        process.exit(verifier.status || 1);
+    }
+});

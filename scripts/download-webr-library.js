@@ -3,6 +3,9 @@
 const fs = require("fs");
 const https = require("https");
 const path = require("path");
+const {
+    writeRPackageManifest
+} = require("./generate-r-package-manifest");
 
 const releaseRepository = "RODA/DialogQCA";
 const productRoot = path.resolve(__dirname, "..");
@@ -191,6 +194,10 @@ const main = async function() {
         touchDownloadedAsset(targetPath, releaseAsset);
     }
 
+    const manifestResult = writeRPackageManifest(libraryDir);
+    console.log(
+        `Installed package manifest written to ${manifestResult.targetPath}`
+    );
     console.log(`WebR package library written to ${libraryDir}`);
 };
 

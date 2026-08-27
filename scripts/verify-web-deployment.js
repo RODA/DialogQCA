@@ -13,7 +13,8 @@ const requiredEndpoints = [
     "/webr/webr.js",
     "/webr/loader.js",
     "/monaco/vs/loader.js",
-    "/webr-library/library.data.gz"
+    "/webr-library/library.data.gz",
+    "/webr-library/package-manifest.json"
 ];
 
 const fetchEndpoint = function(pathname) {
