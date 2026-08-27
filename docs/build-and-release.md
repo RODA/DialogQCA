@@ -62,3 +62,25 @@ Set `DIALOGFORGE_ROOT` when DialogForge is not a sibling checkout.
 
 `.github/workflows/build.yml` builds Linux, Windows, and macOS artifacts from
 the DialogQCA repository.
+
+## Pre-release Gate
+
+Run the complete production verification before calling a revision
+release-ready:
+
+```sh
+npm run verify:production
+```
+
+This is deliberately stronger than source and contract tests. It runs the
+product check with an explicit DialogForge root, builds the production
+artifacts, launches the packaged Electron application, verifies that the
+packaged Script Editor can initialize native Live Script sharing and enables
+both collaboration controls, and exercises the compiled web application.
+
+Use `--skip-build` only when verifying the exact artifacts that will be
+published. A local macOS pass does not certify Windows or Linux. Every CI build
+lane runs the packaged Script Editor and Live Script smoke on its own target
+platform before an artifact can be uploaded or sent for signing.
+The maintainer-only macOS publisher repeats that smoke against the stapled
+application before it changes the GitHub release.

@@ -84,6 +84,10 @@ jobs:
         working-directory: product
         run: npm run build
 
+      - name: Verify packaged Script Editor and Live Script
+        working-directory: DialogForge
+        run: node scripts/verify-production-electron.js --product-path ../product --output-dir ../product/build/output --target script-editor
+
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
@@ -193,6 +197,10 @@ jobs:
         working-directory: product
         run: npm run build
 
+      - name: Verify packaged Script Editor and Live Script
+        working-directory: DialogForge
+        run: node scripts/verify-production-electron.js --product-path ../product --output-dir ../product/build/output --target script-editor
+
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -259,6 +267,10 @@ jobs:
       - name: Build macOS artifact
         working-directory: product
         run: npm run build -- --macos-intel
+
+      - name: Verify packaged Script Editor and Live Script
+        working-directory: DialogForge
+        run: node scripts/verify-production-electron.js --product-path ../product --output-dir ../product/build/output --target script-editor
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4

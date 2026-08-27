@@ -2,7 +2,7 @@
     "private": true,
     "scripts": {
         "start": "node scripts/start-product.js",
-        "check": "node scripts/check-product.js",
+        "check": "node scripts/check-build-ownership.js && node scripts/check-product.js",
         "build": "node scripts/build-product.js",
         "check:build-ownership": "node scripts/check-build-ownership.js",
         "webr:library": "node scripts/download-webr-library.js",
