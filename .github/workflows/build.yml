@@ -26,17 +26,17 @@ on:
       linux_release_tag:
         description: Release tag for Linux Intel artifacts.
         required: false
-        default: li
+        default: latest
         type: string
       windows_release_tag:
         description: Release tag for Windows Intel artifacts.
         required: false
-        default: wi
+        default: latest
         type: string
       macos_release_tag:
         description: Release tag for macOS Intel artifacts.
         required: false
-        default: mi
+        default: latest
         type: string
       release_repository:
         description: Target release repository in owner/repo form (used when publishing).
@@ -72,13 +72,26 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           cache-dependency-path: DialogForge/package-lock.json
 
       - name: Install DialogForge dependencies
         working-directory: DialogForge
-        run: npm ci
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if npm ci; then
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+
+            echo "npm ci failed on attempt $attempt; retrying..."
+            sleep 15
+          done
 
       - name: Build Linux artifact
         working-directory: product
@@ -97,7 +110,6 @@ jobs:
 
       - name: Upload Linux artifact to release
         if: ${{ inputs.publish_release }}
-        shell: bash
         env:
           CURRENT_REPOSITORY: ${{ github.repository }}
           RELEASE_TAG: ${{ inputs.linux_release_tag }}
@@ -157,14 +169,23 @@ jobs:
           if [ "$OVERWRITE_RELEASE_ASSETS" = "true" ]; then
             cmd+=(--clobber)
           fi
+          shopt -s nullglob
+          appimages=(product/build/output/*.AppImage)
+          latestFiles=(product/build/output/latest-linux.yml)
+          blockmaps=(product/build/output/*.AppImage.blockmap)
 
-          files=(product/build/output/*.AppImage)
-          while IFS= read -r optional_file; do
-            files+=("$optional_file")
-          done < <(find product/build/output -maxdepth 1 -type f \( -name '*.AppImage.blockmap' -o -name 'latest-linux.yml' \) | sort)
+          if [ ${#appimages[@]} -eq 0 ]; then
+            echo "No AppImage output found."
+            exit 1
+          fi
 
-          cmd+=("${files[@]}")
-          "${cmd[@]}"
+          if [ ${#latestFiles[@]} -eq 0 ]; then
+            echo "Missing latest-linux.yml updater metadata."
+            exit 1
+          fi
+
+          assets=("${appimages[@]}" "${latestFiles[@]}" "${blockmaps[@]}")
+          "${cmd[@]}" "${assets[@]}"
 
   windows:
     if: ${{ inputs.platform == 'all' || inputs.platform == 'windows' }}
@@ -185,13 +206,27 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           cache-dependency-path: DialogForge/package-lock.json
 
       - name: Install DialogForge dependencies
         working-directory: DialogForge
-        run: npm ci
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if npm ci; then
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+
+            echo "npm ci failed on attempt $attempt; retrying..."
+            sleep 15
+          done
 
       - name: Build Windows artifact
         working-directory: product
@@ -240,6 +275,9 @@ jobs:
   macos:
     if: ${{ inputs.platform == 'all' || inputs.platform == 'macos' }}
     runs-on: macos-15-intel
+    env:
+      CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+      CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
     steps:
       - name: Check out product
         uses: actions/checkout@v5
@@ -256,17 +294,47 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           cache-dependency-path: DialogForge/package-lock.json
 
       - name: Install DialogForge dependencies
         working-directory: DialogForge
-        run: npm ci
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if npm ci; then
+              exit 0
+            fi
 
-      - name: Build macOS artifact
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+
+            echo "npm ci failed on attempt $attempt; retrying..."
+            sleep 15
+          done
+
+      - name: Verify macOS signing secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${CSC_LINK:-}" ] || [ -z "${CSC_KEY_PASSWORD:-}" ]; then
+            echo "::error::MAC_CSC_LINK and MAC_CSC_KEY_PASSWORD are required for the signed Intel build."
+            exit 1
+          fi
+
+      - name: Build signed macOS Intel artifact
         working-directory: product
-        run: npm run build -- --macos-intel
+        run: npm run build -- --macos-intel --sign
+
+      - name: Verify macOS code signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          app_path="product/build/output/mac/DialogQCA.app"
+          codesign --verify --deep --strict --verbose=2 "$app_path"
+          codesign --display --verbose=2 "$app_path"
 
       - name: Verify packaged Script Editor and Live Script
         working-directory: DialogForge
@@ -308,18 +376,20 @@ jobs:
           dmgs=(product/build/output/*.dmg)
           zips=(product/build/output/*.zip)
           blockmaps=(product/build/output/*.zip.blockmap)
-          latest_files=(product/build/output/latest-mac.yml)
+          latest_files=(product/build/output/*-mac.yml)
           if [ ${#dmgs[@]} -eq 0 ] || [ ${#zips[@]} -eq 0 ] || [ ${#blockmaps[@]} -eq 0 ] || [ ${#latest_files[@]} -eq 0 ]; then
-            echo "The macOS DMG, updater ZIP, blockmap, and latest-mac.yml must all exist before release cleanup."
+            echo "The macOS DMG, updater ZIP, blockmap, and architecture-specific *-mac.yml must all exist before release upload."
             exit 1
           fi
           assets=("${dmgs[@]}" "${zips[@]}" "${blockmaps[@]}" "${latest_files[@]}")
 
           if [ "$OVERWRITE_RELEASE_ASSETS" = "true" ]; then
             while IFS= read -r asset; do
-              if [ -n "$asset" ]; then
-                gh release delete-asset "$RELEASE_TAG" "$asset" --repo "$RELEASE_REPOSITORY" --yes
-              fi
+              case "$asset" in
+                DialogQCA_intel.dmg|*-x64-mac.zip|*-x64-mac.zip.blockmap|latest-x64-mac.yml)
+                  gh release delete-asset "$RELEASE_TAG" "$asset" --repo "$RELEASE_REPOSITORY" --yes
+                  ;;
+              esac
             done < <(gh release view "$RELEASE_TAG" --repo "$RELEASE_REPOSITORY" --json assets --jq '.assets[].name')
           fi
 

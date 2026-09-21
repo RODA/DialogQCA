@@ -16,7 +16,7 @@ on:
       release_tag:
         description: Release tag to upload signed artifacts to (used when publishing).
         required: false
-        default: wi
+        default: latest
         type: string
       release_repository:
         description: Target release repository in owner/repo form (used when publishing).
@@ -51,13 +51,27 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           cache-dependency-path: DialogForge/package-lock.json
 
       - name: Install DialogForge dependencies
         working-directory: DialogForge
-        run: npm ci
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if npm ci; then
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+
+            echo "npm ci failed on attempt $attempt; retrying..."
+            sleep 15
+          done
 
       - name: Build Windows artifact
         working-directory: product

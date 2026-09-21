@@ -48,8 +48,8 @@ under `build/output/`.
 
 Release repositories are inferred or optionally configured, but release tags are
 required product settings in `package.json > product.releaseTags`. In
-DialogQCA, the current values are `linuxIntel=li`, `windowsIntel=wi`,
-`macosIntel=mi`, `macosSilicon=ms`, and `webrVFS=web`. Treat these as
+DialogQCA, the current values are `linuxIntel=latest`, `windowsIntel=latest`,
+`macosIntel=latest`, `macosSilicon=latest`, and `webrVFS=web`. Treat these as
 repo-specific examples for this product; other products or forks can use
 different values.
 
@@ -81,6 +81,30 @@ both collaboration controls, and exercises the compiled web application.
 Use `--skip-build` only when verifying the exact artifacts that will be
 published. A local macOS pass does not certify Windows or Linux. Every CI build
 lane runs the packaged Script Editor and Live Script smoke on its own target
-platform before an artifact can be uploaded or sent for signing.
-The maintainer-only macOS publisher repeats that smoke against the stapled
-application before it changes the GitHub release.
+platform before an artifact can be uploaded or sent for signing. Run this gate
+against the final local Apple Silicon build before notarization and publication.
+
+## macOS notarization and publication
+
+The Intel GitHub workflow creates a signed x64 build and uploads its DMG,
+updater ZIP, blockmap, and `latest-x64-mac.yml` to the shared `latest` release.
+On an Apple Silicon Mac, create the signed arm64 build and finish both
+architectures together:
+
+```sh
+npm run build -- --sign
+npm run fetch:intel
+npm run submit
+npm run staple
+npm run publish
+```
+
+`fetch:intel` expands the signed Intel updater ZIP so the app itself can receive
+a ticket. `staple` staples each app before rebuilding its matching ZIP, then
+updates `latest-arm64-mac.yml` and `latest-x64-mac.yml` before stapling the two
+DMGs. `publish` refuses to proceed unless both architecture sets are present.
+
+The default destination is `RODA/DialogQCA` tag `latest`. Override it with
+`DIALOGQCA_PUBLISH_REPO=owner/repo` and `DIALOGQCA_PUBLISH_TAG=tag` when needed.
+The notary profile defaults to `developer-id-notary`; set
+`DIALOGQCA_NOTARY_PROFILE` to use another stored profile.

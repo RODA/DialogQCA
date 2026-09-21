@@ -21,20 +21,30 @@ somewhere else.
 | `npm run build:web` | none | Builds DialogForge's web runtime and DialogQCA web manifest without starting the server. |
 | `npm run serve:web` | optional `--port <number>` and `--host <address>` | Serves the already-built DialogQCA web runtime without rebuilding DialogForge first. |
 | `npm run verify:web-deployment` | optional base URL | Checks the expected DialogQCA web deployment endpoints. Defaults to `DIALOGQCA_WEB_URL` or `http://127.0.0.1:5173`. |
+| `npm run fetch:intel` | none | Downloads the signed Intel macOS files from the `latest` release and expands the app for local notarization. |
+| `npm run submit` | none | Submits the Apple Silicon and Intel DMGs to Apple's notary service and waits for acceptance. |
+| `npm run history` | optional count | Shows recent submissions for the configured notary profile. |
+| `npm run staple` | none | Staples both apps, rebuilds both updater ZIPs and blockmaps, refreshes their architecture-specific metadata, and staples both DMGs. |
+| `npm run publish` | optional `-- --allow-unstapled` | Uploads both macOS architectures and their updater files to the existing `latest` release. |
 
 The compiled desktop application is staged in this repository under `dist/`.
 Installers, update metadata, and other release artifacts are written under
 `build/output/`.
 
-Official notarization and release publication are maintainer-internal operations.
 Developer ID macOS signing is opt-in with `npm run build -- --sign` when the
 caller has a valid signing identity. Without `--sign`, macOS artifacts are
 ad-hoc signed so the app bundle remains valid for local testing and updates,
 but they are not notarized for Gatekeeper.
 
+For a macOS release, build the signed Apple Silicon version locally, run
+`npm run fetch:intel`, then `npm run submit`, `npm run staple`, and
+`npm run publish`. The Intel workflow and local Apple Silicon build both target
+the same `latest` release, while `latest-x64-mac.yml` and
+`latest-arm64-mac.yml` keep their updater payloads separate.
+
 Release tag names are required product settings in
 `package.json > product.releaseTags`. For DialogQCA, the current values are
-`linuxIntel=li`, `windowsIntel=wi`, `macosIntel=mi`, `macosSilicon=ms`, and
+`linuxIntel=latest`, `windowsIntel=latest`, `macosIntel=latest`, `macosSilicon=latest`, and
 `webrVFS=web`. These names and values are product-specific examples for this
 repo and can differ across other products or user forks.
 

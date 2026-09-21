@@ -190,11 +190,7 @@ const inferReleaseRepositoryFromGit = function() {
         encoding: "utf8"
     });
 
-    if (result.error) {
-        return "";
-    }
-
-    if (result.status !== 0) {
+    if (result.error || result.status !== 0) {
         return "";
     }
 
@@ -222,8 +218,8 @@ const resolveReleaseRepository = function(packagePath) {
     );
 };
 
-const rewriteMacUpdateFeed = function(dialogForgeRoot, outputDir) {
-    const latestPath = path.join(outputDir, "latest-mac.yml");
+const rewriteMacUpdateFeed = function(dialogForgeRoot, outputDir, channel) {
+    const latestPath = path.join(outputDir, `${channel}-mac.yml`);
     if (!fs.existsSync(latestPath)) {
         return "";
     }
@@ -256,7 +252,13 @@ const rewriteMacUpdateFeed = function(dialogForgeRoot, outputDir) {
     return zipName;
 };
 
-const cleanupBuildOutput = function(dialogForgeRoot, outputDir, platform, forceMacosIntel) {
+const cleanupBuildOutput = function(
+    dialogForgeRoot,
+    outputDir,
+    platform,
+    forceMacosIntel,
+    updateChannel
+) {
     if (!fs.existsSync(outputDir)) {
         return;
     }
@@ -272,7 +274,8 @@ const cleanupBuildOutput = function(dialogForgeRoot, outputDir, platform, forceM
         return;
     }
 
-    const currentZipName = rewriteMacUpdateFeed(dialogForgeRoot, outputDir);
+    const currentZipName = rewriteMacUpdateFeed(dialogForgeRoot, outputDir, updateChannel);
+    const channelFileName = `${updateChannel}-mac.yml`;
     const stableDmgName = `DialogQCA_${forceMacosIntel ? "intel" : "silicon"}.dmg`;
 
     fs.readdirSync(outputDir, { withFileTypes: true }).forEach((entry) => {
@@ -282,7 +285,7 @@ const cleanupBuildOutput = function(dialogForgeRoot, outputDir, platform, forceM
 
         const fileName = entry.name;
         const keep = fileName === stableDmgName
-            || fileName === "latest-mac.yml"
+            || fileName === channelFileName
             || (currentZipName && fileName === currentZipName)
             || (currentZipName && fileName === `${currentZipName}.blockmap`);
 
@@ -303,10 +306,12 @@ const main = function() {
     const updateReleaseTag = updateReleaseTagForBuild(packagePath, packagingArgs, forceMacosIntel);
     const releaseRepository = resolveReleaseRepository(packagePath);
     const platform = requestedPlatform(packagingArgs);
+    const updateChannel = forceMacosIntel ? "latest-x64" : "latest-arm64";
     const outputDir = path.join(productRoot, "build/output");
     const packagingEnv = Object.assign({}, process.env, {
         DIALOGFORGE_RELEASE_REPOSITORY: releaseRepository,
-        DIALOGFORGE_RELEASE_TAG: updateReleaseTag
+        DIALOGFORGE_RELEASE_TAG: updateReleaseTag,
+        DIALOGFORGE_RELEASE_CHANNEL: platform === "macos" ? updateChannel : ""
     });
 
     runNpm(productRoot, ["run", "check"]);
@@ -326,7 +331,13 @@ const main = function() {
         ...(forceMacosIntel ? ["--arch", "x64"] : []),
         ...packagingArgs
     ], packagingEnv);
-    cleanupBuildOutput(dialogForgeRoot, outputDir, platform, forceMacosIntel);
+    cleanupBuildOutput(
+        dialogForgeRoot,
+        outputDir,
+        platform,
+        forceMacosIntel,
+        updateChannel
+    );
 };
 
 main();
