@@ -14,7 +14,7 @@
       "version": "3.6.6"
     },
     "DDIwR": {
-      "version": "0.20"
+      "version": "0.22"
     },
     "declared": {
       "version": "0.27"
@@ -35,7 +35,7 @@
       "version": "2.0.0"
     },
     "knitr": {
-      "version": "1.51"
+      "version": "1.52"
     },
     "lifecycle": {
       "version": "1.0.5"
@@ -50,13 +50,13 @@
       "version": "2.0.3"
     },
     "QCA": {
-      "version": "3.25.3"
+      "version": "3.25.7"
     },
     "R6": {
       "version": "2.6.1"
     },
     "readxl": {
-      "version": "1.5.0"
+      "version": "1.5.0.1"
     },
     "rematch": {
       "version": "2.0.0"
@@ -89,7 +89,7 @@
       "version": "2.0.1"
     },
     "xfun": {
-      "version": "0.60"
+      "version": "0.61"
     },
     "xml2": {
       "version": "1.6.0"
