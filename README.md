@@ -10,7 +10,7 @@ somewhere else.
 | Command | Public arguments | What it does |
 | --- | --- | --- |
 | `npm start` | optional `-- --forge-path <path>` | Builds and starts DialogQCA in Electron development mode with DevTools open, then restages and restarts it when product files change. Uses the sibling `../DialogForge` checkout by default or `DIALOGFORGE_ROOT` when set. |
-| `npm test` | none | Checks the product, rebuilds current DialogForge sources, and runs the native Calibrate, XY plot, Truth table and Venn workflows, including automatic QCA startup loading, plain `data(LF)`, and hover checks for Venn regions with cases before and after resizing. |
+| `npm test` | none | Checks the product, rebuilds current DialogForge sources, and runs the native Calibrate, XY plot, Truth table and Venn workflows, including automatic QCA startup loading, plain `data(LF)`, and hover checks for Venn regions with cases before and after resizing. Also verifies desktop development and release dialog availability. |
 | `npm run check` | none | Validates the DialogQCA product contribution, TypeScript sources, and structured R package requirements. |
 | `npm run build` | macOS-only `--sign` | Runs `check`, then asks DialogForge to build/package DialogQCA for the current host OS. macOS builds are ad-hoc signed unless `--sign` is passed. |
 | `npm run check:build-ownership` | none | Checks that DialogQCA keeps its product-owned build scripts and release request workflow. |
@@ -31,6 +31,13 @@ somewhere else.
 The compiled desktop application is staged in this repository under `dist/`.
 Installers, update metadata, and other release artifacts are written under
 `build/output/`.
+
+Desktop dialog availability is controlled by `package.json > product.dialogAvailability`.
+Fiss is enabled for development (`npm start`) and disabled for release packages
+(`npm run build`), including Intel and Windows/Linux builds. To include it in a
+later release, change `product.dialogAvailability.fiss.release` to `true`.
+Packaging filters the staged menu and dialog registry; the source registrations
+and implementation remain available for development. Browser builds are unchanged.
 
 Developer ID macOS signing is opt-in with `npm run build -- --sign` when the
 caller has a valid signing identity. Without `--sign`, macOS artifacts are

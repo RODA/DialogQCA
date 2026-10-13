@@ -26,3 +26,4 @@ const run = function(script, args, cwd) {
 run(path.join(dialogForgeRoot, "scripts/build-desktop.js"), [], dialogForgeRoot);
 run(path.join(productRoot, "tests/electron/verify-DialogQCA-dialog-window.js"), [], productRoot);
 run(path.join(productRoot, "tests/verify-venn-dialog.js"), [], productRoot);
+run(path.join(productRoot, "tests/verify-desktop-dialog-availability.js"), [], productRoot);

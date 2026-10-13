@@ -29,7 +29,7 @@
         "@dialogforge/core": "file:../DialogForge/dist/sdk/core"
     },
     "name": "dialogqca",
-    "version": "1.0.24",
+    "version": "1.0.25",
     "description": "A graphical user interface for the QCA package in R.",
     "author": "Adrian Dusa",
     "contributors": [
@@ -86,6 +86,12 @@
         "id": "DialogQCA",
         "name": "DialogQCA",
         "appId": "org.roda.dialogqca",
+        "dialogAvailability": {
+            "fiss": {
+                "development": true,
+                "release": false
+            }
+        },
         "releaseTags": {
             "linuxIntel": "latest",
             "windowsIntel": "latest",

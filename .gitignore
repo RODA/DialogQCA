@@ -5,6 +5,7 @@ build/
 tests/*
 !tests/dialogforge.js
 !tests/verify-venn-dialog.js
+!tests/verify-desktop-dialog-availability.js
 !tests/electron/
 tests/electron/*
 !tests/electron/verify-DialogQCA-dialog-window.js
