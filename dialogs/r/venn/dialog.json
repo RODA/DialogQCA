@@ -4,7 +4,7 @@
         "name": "venn",
         "width": "440",
         "title": "Venn diagram",
-        "height": "540",
+        "height": "489",
         "language": "en_US",
         "fontSize": "12",
         "runtimeProvider": "R",
@@ -18,7 +18,9 @@
                 "name": "venn",
                 "minimumVersion": "1.13"
             }
-        ]
+        ],
+        "resizable": true,
+        "preserveAspectRatio": false
     },
     "syntax": {
         "command": "",
@@ -32,115 +34,66 @@
                 "elements.89b04697-4e64-4d18-a965-c2763125a504.value": "custom",
                 "elements.3afc67af-74ae-4904-8abc-3f741ca89413.value": "C",
                 "elements.989cd113-8ee8-45c6-96a7-d79d49234fda.value": "?",
-                "elements.plot-venn-host.label": "Button"
+                "elements.plot-venn-host.label": "Button",
+                "elements.reset_button.label": "Reset"
             },
             "de_DE": {
                 "dialog.title": "Venn-Diagramm",
                 "elements.89b04697-4e64-4d18-a965-c2763125a504.value": "benutzerdefiniert",
                 "elements.3afc67af-74ae-4904-8abc-3f741ca89413.value": "C",
                 "elements.989cd113-8ee8-45c6-96a7-d79d49234fda.value": "?",
-                "elements.plot-venn-host.label": "Button"
+                "elements.plot-venn-host.label": "Button",
+                "elements.reset_button.label": "Zurücksetzen"
             },
             "fr_FR": {
                 "dialog.title": "Diagramme de Venn",
                 "elements.89b04697-4e64-4d18-a965-c2763125a504.value": "personnalisé",
                 "elements.3afc67af-74ae-4904-8abc-3f741ca89413.value": "C",
                 "elements.989cd113-8ee8-45c6-96a7-d79d49234fda.value": "?",
-                "elements.plot-venn-host.label": "Button"
+                "elements.plot-venn-host.label": "Button",
+                "elements.reset_button.label": "Réinitialiser"
             },
             "pl_PL": {
                 "dialog.title": "Diagram Venna",
                 "elements.89b04697-4e64-4d18-a965-c2763125a504.value": "niestandardowe",
                 "elements.3afc67af-74ae-4904-8abc-3f741ca89413.value": "C",
                 "elements.989cd113-8ee8-45c6-96a7-d79d49234fda.value": "?",
-                "elements.plot-venn-host.label": "Button"
+                "elements.plot-venn-host.label": "Button",
+                "elements.reset_button.label": "Resetuj"
             },
             "es_ES": {
                 "dialog.title": "Diagrama de Venn",
                 "elements.89b04697-4e64-4d18-a965-c2763125a504.value": "personalizado",
                 "elements.3afc67af-74ae-4904-8abc-3f741ca89413.value": "C",
                 "elements.989cd113-8ee8-45c6-96a7-d79d49234fda.value": "?",
-                "elements.plot-venn-host.label": "Button"
+                "elements.plot-venn-host.label": "Button",
+                "elements.reset_button.label": "Restablecer"
             },
             "ro_RO": {
                 "dialog.title": "Diagramă Venn",
                 "elements.89b04697-4e64-4d18-a965-c2763125a504.value": "personalizat",
                 "elements.3afc67af-74ae-4904-8abc-3f741ca89413.value": "C",
                 "elements.989cd113-8ee8-45c6-96a7-d79d49234fda.value": "?",
-                "elements.plot-venn-host.label": "Button"
+                "elements.plot-venn-host.label": "Button",
+                "elements.reset_button.label": "Resetează"
             },
             "el_GR": {
                 "dialog.title": "Διάγραμμα Venn",
                 "elements.89b04697-4e64-4d18-a965-c2763125a504.value": "προσαρμοσμένο",
                 "elements.3afc67af-74ae-4904-8abc-3f741ca89413.value": "C",
                 "elements.989cd113-8ee8-45c6-96a7-d79d49234fda.value": "?",
-                "elements.plot-venn-host.label": "Button"
+                "elements.plot-venn-host.label": "Button",
+                "elements.reset_button.label": "Επαναφορά"
             }
         }
     },
     "elements": [
         {
-            "id": "21fa84b3-8c53-4564-99db-281dcc85b69e",
-            "type": "Separator",
-            "nameid": "separator1",
-            "left": 20,
-            "top": 95,
-            "width": 400,
-            "height": 1.2,
-            "direction": "horizontal",
-            "color": "#000000",
-            "isEnabled": true,
-            "isVisible": true,
-            "elementIds": ""
-        },
-        {
-            "id": "249d0047-fc92-453e-b7ff-903e17e92e54",
-            "left": 20,
-            "top": 494,
-            "type": "Separator",
-            "nameid": "separator2",
-            "width": 400,
-            "height": 1.2,
-            "direction": "horizontal",
-            "color": "#000000",
-            "isEnabled": true,
-            "isVisible": true,
-            "elementIds": ""
-        },
-        {
-            "id": "8f568742-2dcd-4842-9e13-6e17c1482cb9",
-            "left": 20,
-            "top": 95,
-            "type": "Separator",
-            "nameid": "separator3",
-            "width": 1.2,
-            "height": 400,
-            "direction": "vertical",
-            "color": "#000000",
-            "isEnabled": true,
-            "isVisible": true,
-            "elementIds": ""
-        },
-        {
-            "id": "7aa75e94-87f8-4607-9f31-b72c64877716",
-            "left": 419,
-            "top": 95,
-            "type": "Separator",
-            "nameid": "separator4",
-            "width": 1.2,
-            "height": 400,
-            "direction": "vertical",
-            "color": "#000000",
-            "isEnabled": true,
-            "isVisible": true,
-            "elementIds": ""
-        },
-        {
             "id": "0d3e2f2f-5510-4afe-83cb-dfe5035e318b",
             "type": "Checkbox",
             "nameid": "custom",
             "left": 20,
-            "top": 65,
+            "top": 99,
             "size": 14,
             "fill": true,
             "color": "#70a470",
@@ -156,7 +109,7 @@
             "type": "Label",
             "nameid": "label1",
             "left": 38,
-            "top": 65,
+            "top": 99,
             "maxWidth": 200,
             "lineClamp": 1,
             "fontColor": "#000000",
@@ -176,7 +129,7 @@
             "type": "Input",
             "nameid": "input1",
             "left": 145,
-            "top": 61,
+            "top": 95,
             "width": 275,
             "value": "",
             "valueType": "String",
@@ -190,7 +143,7 @@
         {
             "id": "0c32c59e-2ae9-4969-a9a7-46e012a52711",
             "left": 20,
-            "top": 510,
+            "top": 459,
             "type": "Checkbox",
             "nameid": "checkbox1",
             "size": 14,
@@ -201,12 +154,13 @@
             "isChecked": false,
             "isEnabled": false,
             "isVisible": true,
-            "elementIds": ""
+            "elementIds": "",
+            "moveWithDialog": "0,1"
         },
         {
             "id": "3c7206fa-aba2-4331-b8f4-51523e85efde",
             "left": 70,
-            "top": 510,
+            "top": 459,
             "type": "Checkbox",
             "nameid": "checkbox2",
             "size": 14,
@@ -217,12 +171,13 @@
             "isChecked": false,
             "isEnabled": false,
             "isVisible": true,
-            "elementIds": ""
+            "elementIds": "",
+            "moveWithDialog": "0,1"
         },
         {
             "id": "8bbf80c4-53b1-43c0-9899-ebcdd7879e19",
             "left": 120,
-            "top": 510,
+            "top": 459,
             "type": "Checkbox",
             "nameid": "checkbox3",
             "size": 14,
@@ -233,12 +188,13 @@
             "isChecked": false,
             "isEnabled": false,
             "isVisible": true,
-            "elementIds": ""
+            "elementIds": "",
+            "moveWithDialog": "0,1"
         },
         {
             "id": "99ec7c2b-e277-4917-9f0c-91634d9503d7",
             "left": 170,
-            "top": 510,
+            "top": 459,
             "type": "Checkbox",
             "nameid": "checkbox4",
             "size": 14,
@@ -249,14 +205,15 @@
             "isChecked": false,
             "isEnabled": false,
             "isVisible": true,
-            "elementIds": ""
+            "elementIds": "",
+            "moveWithDialog": "0,1"
         },
         {
             "id": "54ea5700-ee1a-4650-bd1a-69d9daf0ab9f",
             "type": "Label",
             "nameid": "label2",
             "left": 40,
-            "top": 510,
+            "top": 459,
             "maxWidth": 200,
             "lineClamp": 1,
             "fontColor": "#000000",
@@ -269,12 +226,13 @@
             "fontSize": 12,
             "icon": "none",
             "iconSize": 0,
-            "valign": "top"
+            "valign": "top",
+            "moveWithDialog": "0,1"
         },
         {
             "id": "e8c84ebe-cd3f-4d3c-b40b-42375a73d2f5",
             "left": 90,
-            "top": 510,
+            "top": 459,
             "type": "Label",
             "nameid": "label3",
             "maxWidth": 200,
@@ -289,12 +247,13 @@
             "fontSize": 12,
             "icon": "none",
             "iconSize": 0,
-            "valign": "top"
+            "valign": "top",
+            "moveWithDialog": "0,1"
         },
         {
             "id": "3afc67af-74ae-4904-8abc-3f741ca89413",
             "left": 140,
-            "top": 510,
+            "top": 459,
             "type": "Label",
             "nameid": "label4",
             "maxWidth": 200,
@@ -309,12 +268,13 @@
             "fontSize": 12,
             "icon": "none",
             "iconSize": 0,
-            "valign": "top"
+            "valign": "top",
+            "moveWithDialog": "0,1"
         },
         {
             "id": "989cd113-8ee8-45c6-96a7-d79d49234fda",
             "left": 190,
-            "top": 510,
+            "top": 459,
             "type": "Label",
             "nameid": "label5",
             "maxWidth": 200,
@@ -329,28 +289,30 @@
             "fontSize": 12,
             "icon": "none",
             "iconSize": 0,
-            "valign": "top"
+            "valign": "top",
+            "moveWithDialog": "0,1"
         },
         {
             "id": "eb52c002-e1f9-4ab5-8324-45ad2d7200e2",
             "type": "Select",
             "nameid": "select1",
             "left": 145,
-            "top": 20,
+            "top": 54,
             "width": 150,
             "value": "",
             "arrowColor": "#5b855b",
             "disabledColor": "#dedede",
             "isEnabled": true,
             "isVisible": true,
-            "elementIds": ""
+            "elementIds": "",
+            "moveWithDialog": "0.5,0"
         },
         {
             "id": "plot-venn-host",
             "type": "Plot",
             "nameid": "plot_venn",
             "left": 20,
-            "top": 95,
+            "top": 44,
             "width": 400,
             "height": 400,
             "backgroundColor": "transparent",
@@ -363,7 +325,28 @@
             "lineClamp": 1,
             "color": "#efefef",
             "fontColor": "#000000",
-            "elementIds": ""
+            "elementIds": "",
+            "resizeWithDialog": true
+        },
+        {
+            "id": "reset_button",
+            "type": "Button",
+            "nameid": "reset_button",
+            "left": 20,
+            "top": 574,
+            "width": 95,
+            "height": 28,
+            "label": "Reset",
+            "backgroundColor": "#efefef",
+            "fontColor": "#222222",
+            "borderColor": "#aaaaaa",
+            "isVisible": true,
+            "isEnabled": true,
+            "elementIds": "",
+            "icon": "none",
+            "iconSize": 0,
+            "lineClamp": 1,
+            "color": "#efefef"
         }
     ],
     "script": {

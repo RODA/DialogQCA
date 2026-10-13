@@ -250,27 +250,9 @@ const createSvgElement = function<K extends keyof SVGElementTagNameMap>(
 
 
 const styleToolbarButton = function(button: HTMLButtonElement, iconOnly = false): void {
-    Object.assign(button.style, {
-        minWidth: iconOnly ? "26px" : "32px",
-        width: iconOnly ? "26px" : "auto",
-        height: "26px",
-        padding: iconOnly ? "0" : "0 8px",
-        border: "1px solid #d0d0d0",
-        borderRadius: "6px",
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#ffffff",
-        color: "#383838",
-        fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif",
-        fontSize: "11px",
-        fontWeight: "700",
-        lineHeight: "1",
-        cursor: "pointer",
-        boxSizing: "border-box",
-        flex: "0 0 auto",
-        whiteSpace: "nowrap"
-    });
+    button.className = iconOnly
+        ? "plot-toolbar-btn plot-toolbar-btn--icon"
+        : "plot-toolbar-btn";
 
     button.addEventListener("mouseenter", () => {
         button.style.background = button.getAttribute("aria-pressed") === "true"
@@ -313,96 +295,28 @@ const setToolbarToggleState = function(
 
 
 const createCopyIcon = function(): HTMLSpanElement {
-    const icon = createElement("span", {
-        position: "relative",
-        display: "inline-block",
-        width: "18px",
-        height: "18px"
-    });
-    const rear = createElement("span", {
-        position: "absolute",
-        width: "10px",
-        height: "10px",
-        border: "1.3px solid currentColor",
-        borderRadius: "2.5px",
-        boxSizing: "border-box",
-        top: "1.5px",
-        left: "5px"
-    });
-    const front = createElement("span", {
-        position: "absolute",
-        width: "10px",
-        height: "10px",
-        border: "1.3px solid currentColor",
-        borderRadius: "2.5px",
-        boxSizing: "border-box",
-        top: "4.5px",
-        left: "1.5px"
-    });
-
-    icon.append(rear, front);
-
+    const icon = createElement("span");
+    icon.className = "copy-icon";
+    icon.setAttribute("aria-hidden", "true");
     return icon;
 };
 
 
-const createSaveIcon = function(): SVGSVGElement {
-    const svg = createSvgElement("svg", {
-        width: 16,
-        height: 16,
-        viewBox: "0 0 16 16",
-        "aria-hidden": "true"
-    });
-
-    svg.appendChild(createSvgElement("rect", {
-        x: 1,
-        y: 1,
-        width: 14,
-        height: 14,
-        rx: 0.7,
-        fill: "none",
-        stroke: "currentColor"
-    }));
-    svg.appendChild(createSvgElement("path", {
-        d: "M3.5 1v3.46c0 .3.24.54.54.54h7.92c.3 0 .54-.24.54-.54V1M5.04 9c-.3 0-.54.24-.54.54V15h7V9.54c0-.3-.24-.54-.54-.54Z",
-        fill: "none",
-        stroke: "currentColor",
-        "stroke-linecap": "round"
-    }));
-
-    return svg;
+const createSaveIcon = function(): HTMLImageElement {
+    const icon = createElement("img");
+    icon.className = "plot-toolbar-icon";
+    icon.src = "../../assets/icons/save.svg";
+    icon.alt = "";
+    return icon;
 };
 
 
-const createFitIcon = function(): SVGSVGElement {
-    const svg = createSvgElement("svg", {
-        width: 18,
-        height: 18,
-        viewBox: "0 0 16 16",
-        "aria-hidden": "true"
-    });
-
-    svg.appendChild(createSvgElement("rect", {
-        x: 4,
-        y: 4,
-        width: 8,
-        height: 8,
-        fill: "none",
-        stroke: "currentColor"
-    }));
-    [
-        "M8 .5 6.5 2.5h3Z",
-        "M8 15.5 9.5 13.5h-3Z",
-        "M.5 8l2 1.5v-3Z",
-        "M15.5 8l-2-1.5v3Z"
-    ].forEach((path) => {
-        svg.appendChild(createSvgElement("path", {
-            d: path,
-            fill: "currentColor"
-        }));
-    });
-
-    return svg;
+const createFitIcon = function(): HTMLImageElement {
+    const icon = createElement("img");
+    icon.className = "plot-toolbar-icon";
+    icon.src = "../../assets/icons/fit.svg";
+    icon.alt = "";
+    return icon;
 };
 
 
@@ -1547,71 +1461,39 @@ const createZoomMenu = function(toolbar: HTMLElement) {
     button.setAttribute("aria-label", "Set the plot zoom");
     button.setAttribute("aria-haspopup", "menu");
     button.setAttribute("aria-expanded", "false");
-    styleToolbarButton(button);
-    Object.assign(button.style, {
-        padding: "0 5px",
-        gap: "4px",
-        fontWeight: "400"
-    });
-    button.appendChild(createFitIcon());
+    menu.className = "plot-zoom-menu";
+    button.className = "plot-zoom-button";
+    const face = createElement("span");
+    face.className = "plot-zoom-button-face";
+    const icon = createElement("span");
+    icon.className = "plot-zoom-button-icon";
+    icon.appendChild(createFitIcon());
     const label = createElement("span");
-
+    label.className = "plot-zoom-button-label";
     label.textContent = "100%";
-    button.appendChild(label);
-    const arrow = createElement("span", {
-        width: "0",
-        height: "0",
-        borderLeft: "4px solid transparent",
-        borderRight: "4px solid transparent",
-        borderTop: "5px solid #5a5a5a",
-        marginLeft: "1px"
-    });
-
-    button.appendChild(arrow);
+    const arrow = createElement("span");
+    arrow.className = "plot-zoom-button-arrow";
+    face.append(icon, label, arrow);
+    button.appendChild(face);
 
     const popup = createElement("div");
-    stylePopup(popup);
-    Object.assign(popup.style, {
-        minWidth: "154px",
-        padding: "8px 0",
-        borderRadius: "22px"
-    });
+    popup.className = "plot-zoom-menu-popup";
     popup.setAttribute("role", "menu");
     popup.setAttribute("aria-label", "Set the plot zoom");
     const items = ZOOM_LEVELS.map((zoom) => {
         const item = createElement("button");
-        const check = createElement("span", {
-            width: "16px",
-            visibility: zoom === 1 ? "visible" : "hidden"
-        });
-        const text = createElement("span", {
-            flex: "1 1 auto",
-            textAlign: "left",
-            paddingLeft: "6px"
-        });
-
+        item.className = "plot-zoom-menu-item";
+        const check = createElement("span");
+        check.className = "plot-zoom-menu-item-check";
+        const text = createElement("span");
+        text.className = "plot-zoom-menu-item-label";
         item.type = "button";
         item.dataset.zoom = String(zoom);
         item.setAttribute("role", "menuitemradio");
         item.setAttribute("aria-checked", zoom === 1 ? "true" : "false");
-        Object.assign(item.style, {
-            width: "100%",
-            height: "32px",
-            padding: "0 14px",
-            border: "0",
-            background: "transparent",
-            color: "#2f2f2f",
-            display: "flex",
-            alignItems: "center",
-            fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-            fontSize: "11px",
-            cursor: "pointer",
-            boxSizing: "border-box"
-        });
         check.textContent = "✓";
         text.textContent = `${Math.round(zoom * 100)}%`;
         item.append(check, text);
-
         return item;
     });
     const hint = createElement("div", {
@@ -1646,22 +1528,8 @@ const createController = function(host: HTMLElement): XYPlotController {
         height: "100%",
         overflow: "visible"
     });
-    const toolbar = createElement("div", {
-        position: "absolute",
-        top: "0",
-        left: "0",
-        right: "0",
-        height: "34px",
-        padding: "0 12px",
-        borderBottom: "1px solid #d7d7d7",
-        background: "#f8f8f8",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "flex-end",
-        gap: "6px",
-        zIndex: "20",
-        boxSizing: "border-box"
-    });
+    const toolbar = createElement("div");
+    toolbar.className = "plot-dialog-window-toolbar";
     toolbar.setAttribute("role", "toolbar");
     toolbar.setAttribute("aria-label", "XY plot toolbar");
 

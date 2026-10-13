@@ -1,3 +1,4 @@
+import { getPlotResetButton, getPlotToolbarHost } from "../../qca/svgPlotToolbar";
 import {
     renderVennDiagram
 } from "../../qca/vennRenderer";
@@ -30,6 +31,56 @@ export const createVennDialogRuntime = function(options: {
     listTruthTableNames: () => Promise<string[]>;
 }) {
     const blurBindings = new WeakSet<HTMLElement>();
+    const toolbarControls = new WeakMap<HTMLElement, HTMLElement>();
+
+    const moveControlsToToolbar = function(host: HTMLElement, source: Record<string, unknown>): HTMLElement {
+        let controls = toolbarControls.get(host);
+        if (!controls) {
+            controls = document.createElement("div");
+            controls.className = "venn-toolbar-controls";
+            const style = document.createElement("style");
+            style.textContent = `
+                .venn-toolbar-controls {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    flex: 1 1 auto;
+                    min-width: 0;
+                }
+                .venn-toolbar-controls > .dm-el {
+                    position: static !important;
+                    inset: auto !important;
+                    flex: 0 0 auto;
+                }
+                .venn-toolbar-controls > .dm-label { width: auto !important; }
+                .venn-toolbar-controls > .dm-select {
+                    flex: 0 1 150px;
+                    min-width: 60px;
+                }
+                .venn-toolbar-controls > .dm-select select { width: 100% !important; }
+                .venn-toolbar-controls > .dm-input {
+                    flex: 1 1 180px;
+                    min-width: 60px;
+                }
+                .venn-toolbar-controls > .dm-input textarea {
+                    width: 100% !important;
+                    box-sizing: border-box;
+                }
+            `;
+            controls.appendChild(style);
+            toolbarControls.set(host, controls);
+        }
+        for (const name of [source.customCheckbox, source.customLabel, source.truthTableSelect, source.customInput]) {
+            const node = options.api.getElementNode?.(asString(name));
+            if (node instanceof HTMLElement) {
+                const wrapper = node.closest<HTMLElement>(".dm-el") || node;
+                if (wrapper.parentElement !== controls) {
+                    controls.appendChild(wrapper);
+                }
+            }
+        }
+        return controls;
+    };
 
     const attachInputBlur = function(elementName: unknown): void {
         const host = options.api.getElementNode?.(elementName);
@@ -62,6 +113,7 @@ export const createVennDialogRuntime = function(options: {
         let nextPayload = { ...source };
 
         delete nextPayload.target;
+        delete nextPayload.resetButton;
 
         if (
             truthTableName
@@ -86,7 +138,19 @@ export const createVennDialogRuntime = function(options: {
             };
         }
 
-        renderVennDiagram(host, nextPayload);
+        const resetNode = options.api.getElementNode?.(asString(source.resetButton));
+        const resetButton = getPlotResetButton(resetNode);
+        if (resetNode instanceof HTMLElement) {
+            const container = resetNode.closest<HTMLElement>(".dm-el") || resetNode;
+            container.style.display = "none";
+        }
+        renderVennDiagram(host, nextPayload, {
+            toolbarHost: getPlotToolbarHost(host),
+            toolbarControls: moveControlsToToolbar(host, source),
+            reset: resetButton ? () => resetButton.click() : undefined,
+            resetLabel: asString(resetButton?.textContent) || "Reset",
+            windowTitle: document.title || "Venn diagram"
+        });
 
         return null;
     };
@@ -102,7 +166,9 @@ export const createVennDialogRuntime = function(options: {
 
         if (!truthTableName) {
             return render({
+                ...source,
                 target: source.target,
+                resetButton: source.resetButton,
                 conditions: [],
                 ids: [],
                 out: [],
@@ -113,7 +179,9 @@ export const createVennDialogRuntime = function(options: {
         }
 
         return render({
+            ...source,
             target: source.target,
+            resetButton: source.resetButton,
             truthTableName,
             showCustom: customCheckbox
                 ? options.api.isChecked?.(customCheckbox) === true

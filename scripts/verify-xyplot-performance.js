@@ -23,6 +23,10 @@ const electronExecutable = require(path.join(
     dialogForgeRoot,
     "node_modules/electron"
 ));
+const { runConsoleCommand } = require(path.join(
+    dialogForgeRoot,
+    "tests/support/console-interactions"
+));
 const mainEntry = path.join(
     dialogForgeRoot,
     "dist/scripts/electron-main.js"
@@ -52,6 +56,9 @@ const waitForRuntime = async function(page) {
     }, undefined, {
         timeout: 30000
     });
+    await page.locator('#consoleTerminal [data-console-input-line="true"]').filter({
+        hasText: "library(QCA)"
+    }).waitFor({ state: "visible", timeout: 30000 });
     await page.waitForFunction(async () => {
         const result = await window.dialogForge.executeInvisibleQuery({
             query: '"package:QCA" %in% search()',
@@ -63,22 +70,6 @@ const waitForRuntime = async function(page) {
         timeout: 30000,
         polling: 200
     });
-};
-
-
-const submitConsoleCommand = function(page, command) {
-    return page.evaluate(async (commandText) => {
-        const input = document.getElementById("visibleCommandInput");
-        const view = input?.dialogForgeConsoleInputView;
-
-        if (!view) {
-            throw new Error("DialogForge console input is not ready.");
-        }
-
-        view.setText(commandText);
-        view.focus();
-        await view.submit();
-    }, command);
 };
 
 
@@ -187,57 +178,21 @@ const waitForPlotReady = async function(page, pointCount, dataKeyPrefix = "") {
 };
 
 
-const measureToolbarToggle = function(page, label) {
-    return page.evaluate((buttonLabel) => {
-        const button = Array.from(document.querySelectorAll(
-            '[role="toolbar"] button'
-        )).find((candidate) => {
-            return candidate.getAttribute("aria-label") === buttonLabel
-                || String(candidate.textContent || "").trim() === buttonLabel;
-        });
-
-        if (!(button instanceof HTMLButtonElement)) {
-            throw new Error(`Missing XY toolbar button ${buttonLabel}.`);
-        }
-
-        window.__xyArcCount = 0;
-        window.__xyFillTextCount = 0;
-        const startedAt = performance.now();
-
-        button.click();
-
-        return {
-            elapsedMs: performance.now() - startedAt,
-            arcs: window.__xyArcCount,
-            textDraws: window.__xyFillTextCount
-        };
-    }, label);
+const measureToolbarToggle = async function(page, label) {
+    await resetCanvasCounters(page);
+    const startedAt = Date.now();
+    await page.getByRole("button", { name: label, exact: true }).click();
+    const counts = await page.evaluate(() => ({
+        arcs: window.__xyArcCount,
+        textDraws: window.__xyFillTextCount
+    }));
+    return { elapsedMs: Date.now() - startedAt, ...counts };
 };
 
 
-const chooseZoom = function(page, zoom) {
-    return page.evaluate((value) => {
-        const menuButton = document.querySelector(
-            'button[aria-label="Set the plot zoom"]'
-        );
-
-        if (!(menuButton instanceof HTMLButtonElement)) {
-            throw new Error("Missing XY zoom button.");
-        }
-
-        menuButton.click();
-        const item = Array.from(document.querySelectorAll(
-            '[role="menuitemradio"]'
-        )).find((candidate) => {
-            return Number(candidate.getAttribute("data-zoom")) === value;
-        });
-
-        if (!(item instanceof HTMLButtonElement)) {
-            throw new Error(`Missing ${value * 100}% XY zoom item.`);
-        }
-
-        item.click();
-    }, zoom);
+const chooseZoom = async function(page, zoom) {
+    await page.getByRole("button", { name: "Set the plot zoom", exact: true }).click();
+    await page.locator(`[role="menuitemradio"][data-zoom="${zoom}"]`).click();
 };
 
 
@@ -355,25 +310,39 @@ const run = async function() {
         const mainPage = await findMainWindowPage(app);
 
         await waitForRuntime(mainPage);
-        await submitConsoleCommand(mainPage, [
-            'data(LF, package = "QCA")',
+        await runConsoleCommand(mainPage, "data(LF)");
+        await waitForWorkspaceObjects(mainPage, ["LF"]);
+        if (await mainPage.evaluate(() => document.body.classList.contains("workspace-pane-hidden"))) {
+            await mainPage.locator("#workspacePaneToggle").click();
+        }
+        await mainPage.locator('[data-workspace-variable-row="LF"]').waitFor({ state: "visible" });
+        assert.match(
+            await mainPage.locator('[data-workspace-variable-row="LF"]').textContent(),
+            /18 rows x 6 columns/,
+            "LF must already be a dataset before the benchmark reads it."
+        );
+        // This explicitly named benchmark resamples LF to measure 5,000 points.
+        await runConsoleCommand(mainPage, [
             "set.seed(1)",
             "LF5000 <- LF[sample(seq_len(nrow(LF)), 5000, replace = TRUE), , drop = FALSE]"
         ].join("; "));
         await waitForWorkspaceObjects(mainPage, ["LF5000"]);
-        const activeDataset = await mainPage.evaluate(async () => {
-            return await window.dialogForge.setActiveDataset("LF5000");
+        await mainPage.locator('[data-workspace-variable="LF5000"]').click({ button: "right" });
+        await mainPage.locator('[data-workspace-context-action="make-active"]').click();
+        await mainPage.locator('[data-workspace-variable-row="LF5000"].active-dataset').waitFor({
+            state: "visible"
         });
-        assert.equal(activeDataset.objectName, "LF5000");
 
         const dialogPromise = app.waitForEvent("window", {
             timeout: 10000
         });
-        const openResult = await mainPage.evaluate(() => {
-            return window.dialogForge.openProductDialog("xyplot");
+        await app.evaluate(({ Menu }) => {
+            const item = Menu.getApplicationMenu()?.getMenuItemById("QcaXyPlot");
+            if (!item || !item.enabled) {
+                throw new Error("The XY plot menu item is unavailable.");
+            }
+            item.click();
         });
-
-        assert.equal(openResult.status, "opened");
         const dialogPage = await dialogPromise;
 
         await dialogPage.waitForSelector(

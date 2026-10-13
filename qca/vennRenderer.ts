@@ -1,3 +1,5 @@
+import { createSvgPlotToolbar } from "./svgPlotToolbar";
+
 import { VENN_GEOMETRY } from './vennGeometry';
 
 type VennPayload = {
@@ -8,6 +10,22 @@ type VennPayload = {
   showCustom?: boolean;
   customText?: string;
 };
+
+export interface VennRenderOptions {
+    toolbarHost?: HTMLElement;
+    toolbarControls?: HTMLElement;
+    reset?: () => void;
+    resetLabel?: string;
+    windowTitle?: string;
+}
+
+const previewStates = new WeakMap<HTMLElement, {
+    zoom: number;
+    events: AbortController;
+    payloadKey: string;
+    width: number;
+    height: number;
+}>();
 
 type VennShapeGeometry = [number[][], number[][]];
 
@@ -255,8 +273,26 @@ function customShape(
   };
 }
 
-export function renderVennDiagram(host: HTMLElement, payload: VennPayload) {
-  host.innerHTML = '';
+export function renderVennDiagram(
+    host: HTMLElement, payload: VennPayload, options: VennRenderOptions = {}
+) {
+    const width = Math.max(1, host.clientWidth || 400);
+    const height = Math.max(1, host.clientHeight || 400);
+    const payloadKey = JSON.stringify(payload);
+    const previous = previewStates.get(host);
+    if (previous?.payloadKey === payloadKey
+        && previous.width === width && previous.height === height) {
+        return;
+    }
+    previous?.events.abort();
+    const preview = {
+        zoom: previous?.zoom || 1, events: new AbortController(),
+        payloadKey, width, height
+    };
+    previewStates.set(host, preview);
+    host.replaceChildren();
+    host.style.overflow = "hidden";
+    host.style.position = "relative";
   const conditions = asArray(payload.conditions).map((item) => item.trim()).filter(Boolean);
   const ids = asArray(payload.ids);
   const out = asArray(payload.out);
@@ -272,35 +308,94 @@ export function renderVennDiagram(host: HTMLElement, payload: VennPayload) {
   const shapeData = VENN_GEOMETRY[shapeKey] as VennShapeGeometry | undefined;
   const labelData = VENN_GEOMETRY[labelKey] as VennLabelGeometry | undefined;
 
-  const width = Math.max(1, host.clientWidth || 400);
-  const height = Math.max(1, host.clientHeight || 400);
-  const scale = Math.min(width, height) / 1000;
-  const offsetX = Math.round((width - 1000 * scale) / 2);
-  const offsetY = Math.round((height - 1000 * scale) / 2);
+  const size = Math.min(width, height);
+  const scale = size / 1000;
 
   const svg = svgEl('svg', {
-    viewBox: `0 0 ${width} ${height}`,
-    width,
-    height
+    viewBox: `0 0 ${size} ${size}`,
+    width: size,
+    height: size
   });
-  svg.style.display = 'block';
-  host.appendChild(svg);
+    svg.style.display = "block";
+    svg.style.fontFamily = getComputedStyle(host).fontFamily;
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", "Venn diagram");
+    const shell = document.createElement("div");
+    shell.className = "plot-dialog-shell";
+    const viewport = document.createElement("div");
+    viewport.className = "plot-dialog-viewport";
+    const stage = document.createElement("div");
+    stage.className = "plot-dialog-stage";
+    stage.appendChild(svg);
+    viewport.appendChild(stage);
+    const toolbar = createSvgPlotToolbar({
+        svg: shapeData && labelData ? svg : null,
+        title: "Venn diagram",
+        windowTitle: options.windowTitle || "Venn diagram",
+        windowLevel: Boolean(options.toolbarHost),
+        reset: options.reset,
+        resetLabel: options.resetLabel,
+        zoom: preview.zoom,
+        signal: preview.events.signal,
+        setZoom: (zoom) => {
+            preview.zoom = zoom;
+            svg.style.width = `${size * zoom}px`;
+            svg.style.height = `${size * zoom}px`;
+        }
+    });
+    toolbar.querySelector(".plot-dialog-window-title")?.remove();
+    if (options.toolbarControls) {
+        toolbar.prepend(options.toolbarControls);
+    }
+    if (options.toolbarHost) {
+        options.toolbarHost.replaceChildren(toolbar);
+        shell.appendChild(viewport);
+    } else {
+        shell.append(toolbar, viewport);
+    }
+    host.appendChild(shell);
+
+    if (typeof ResizeObserver === "function") {
+        let pendingFrame = 0;
+        const observer = new ResizeObserver(() => {
+            if (host.clientWidth === width && host.clientHeight === height) {
+                return;
+            }
+            if (!pendingFrame) {
+                pendingFrame = window.requestAnimationFrame(() => {
+                    if (host.isConnected) {
+                        renderVennDiagram(host, payload, options);
+                    }
+                });
+            }
+        });
+        observer.observe(host);
+        preview.events.signal.addEventListener("abort", () => {
+            observer.disconnect();
+            window.cancelAnimationFrame(pendingFrame);
+        }, { once: true });
+    }
 
   if (!shapeData || !labelData || count < 1 || count > 7) {
-    const text = svgEl('text', { x: width / 2, y: height / 2, 'text-anchor': 'middle', 'font-size': 14, fill: '#666666' });
+    const text = svgEl('text', { x: size / 2, y: size / 2, 'text-anchor': 'middle', 'font-size': 14, fill: '#666666' });
     text.textContent = 'Select a truth table with 1-7 conditions';
     svg.appendChild(text);
     return;
   }
 
-  const group = svgEl('g', { transform: `translate(${offsetX}, ${offsetY})` });
+  const group = svgEl('g');
   svg.appendChild(group);
 
   const coloredGroup = svgEl('g');
   const hoverGroup = svgEl('g');
-  const borderGroup = svgEl('g');
-  const labelsGroup = svgEl('g');
-  const overlayGroup = svgEl('g');
+  const borderGroup = svgEl('g', { 'pointer-events': 'none' });
+  const labelsGroup = svgEl('g', { 'pointer-events': 'none' });
+  const overlayGroup = svgEl('g', { 'data-plot-export-ignore': 'true', 'pointer-events': 'none' });
+  borderGroup.appendChild(svgEl('rect', {
+    'data-venn-frame': 'true', x: 0.5, y: 0.5,
+    width: size - 1, height: size - 1,
+    fill: 'none', stroke: '#000000', 'stroke-width': 1
+  }));
   group.appendChild(coloredGroup);
   group.appendChild(hoverGroup);
   group.appendChild(borderGroup);
@@ -362,7 +457,7 @@ export function renderVennDiagram(host: HTMLElement, payload: VennPayload) {
     if (!lines.length) lines.push(hoverText);
     overlayGroup.removeChild(measure);
 
-    const tooltipGroup = svgEl('g');
+    const tooltipGroup = svgEl('g', { role: 'tooltip' });
     const textEl = svgEl('text', {
       x: xcoord,
       y: ycoord,
@@ -414,7 +509,10 @@ export function renderVennDiagram(host: HTMLElement, payload: VennPayload) {
     }
     if (!customMode) {
       const fill = COLORS[String(out[index] || '?')] || '#ffffff';
-      const path = svgEl('path', { d, fill, stroke: 'none' });
+      const path = svgEl('path', {
+        d, fill, stroke: 'none', 'fill-rule': 'evenodd',
+        'data-venn-row': index + 1, 'data-venn-outcome': String(out[index] || '?')
+      });
       coloredGroup.appendChild(path);
     }
 
@@ -430,6 +528,7 @@ export function renderVennDiagram(host: HTMLElement, payload: VennPayload) {
       }
     }
     const text = svgEl('text', {
+      'data-venn-label': index + 1,
       x: index === 0 ? 20 : round(centroid.x),
       y: index === 0 ? 20 : round(centroid.y),
       'text-anchor': 'middle',
@@ -439,9 +538,12 @@ export function renderVennDiagram(host: HTMLElement, payload: VennPayload) {
     text.textContent = String(id || '');
     labelsGroup.appendChild(text);
 
-    const hoverText = String(cases[index] || '');
+    const hoverText = String(cases[index] || '').trim();
     if (!customMode && hoverText) {
-      const hoverPath = svgEl('path', { d, fill: '#ffffff', 'fill-opacity': 0, stroke: 'none' });
+      const hoverPath = svgEl('path', {
+        d, fill: '#ffffff', 'fill-opacity': 0, stroke: 'none',
+        'fill-rule': 'evenodd', 'data-venn-region': id, 'data-venn-row': index + 1
+      });
       hoverPath.addEventListener('mouseenter', () => showHover(d, hoverText, hoverPath));
       hoverPath.addEventListener('mouseleave', clearHover);
       hoverGroup.appendChild(hoverPath);
@@ -473,11 +575,15 @@ export function renderVennDiagram(host: HTMLElement, payload: VennPayload) {
         const path = svgEl('path', {
           d,
           fill: '#96bc72',
+          'fill-rule': 'evenodd',
           'fill-opacity': 0.75,
           stroke: 'none'
         });
         customGroup.appendChild(path);
-        const hoverPath = svgEl('path', { d, fill: '#ffffff', 'fill-opacity': 0, stroke: 'none' });
+        const hoverPath = svgEl('path', {
+          d, fill: '#ffffff', 'fill-opacity': 0, stroke: 'none',
+          'fill-rule': 'evenodd', 'data-venn-expression': key
+        });
         hoverPath.addEventListener('mouseenter', () => showHover(d, key, hoverPath));
         hoverPath.addEventListener('mouseleave', clearHover);
         customHoverGroup.appendChild(hoverPath);

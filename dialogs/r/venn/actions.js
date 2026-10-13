@@ -2,7 +2,9 @@ const vennDialog = {
   target: plot_venn,
   truthTableSelect: select1,
   customCheckbox: custom,
-  customInput: input1
+  customLabel: label1,
+  customInput: input1,
+  resetButton: reset_button
 };
 
 onChange(select1, () => {
@@ -21,6 +23,11 @@ onChange(input1, () => {
 
 onInput(input1, () => {
   callExternal('qca.syncVennDialog', vennDialog);
+});
+
+onClick(reset_button, async () => {
+  resetDialog();
+  await callExternal('qca.initializeVennDialog', vennDialog);
 });
 
 callExternal('qca.initializeVennDialog', vennDialog);

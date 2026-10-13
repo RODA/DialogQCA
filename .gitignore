@@ -1,7 +1,13 @@
 node_modules/
 dist/
 build/
-tests/
+# Keep the routinely enforced native acceptance in clean checkouts.
+tests/*
+!tests/dialogforge.js
+!tests/verify-venn-dialog.js
+!tests/electron/
+tests/electron/*
+!tests/electron/verify-DialogQCA-dialog-window.js
 .DS_Store
 library/R/library.data.gz
 library/R/library.js.metadata
