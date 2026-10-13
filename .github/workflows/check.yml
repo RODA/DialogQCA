@@ -8,6 +8,7 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Check out product
         uses: actions/checkout@v5
@@ -32,6 +33,21 @@ jobs:
         working-directory: DialogForge
         run: npm ci
 
-      - name: Check product contribution
+      - name: Set up the native R version used by the pinned helper
+        uses: r-lib/actions/setup-r@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
+        with:
+          r-version: '4.6.1'
+          use-public-rspm: false
+
+      - name: Install the Electron display and R build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgtk-3-0 libnss3 libasound2t64 libfontconfig1-dev libcurl4-openssl-dev libssl-dev libxml2-dev
+
+      - name: Install the product's native R dependencies
         working-directory: product
-        run: npm run check
+        run: Rscript scripts/install-native-test-packages.R
+
+      - name: Check product and native dataset-to-dialog workflow
+        working-directory: product
+        run: xvfb-run -a npm test

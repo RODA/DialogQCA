@@ -17,13 +17,22 @@
             "QCA",
             "venn"
         ],
+        "replacement": "Verify QCA package availability through provider-neutral dependency checks."
+    },
+    {
+        "id": "qca-load",
+        "label": "Load QCA",
+        "owner": "products/DialogQCA",
+        "status": "implemented",
+        "requiredRuntime": ["dependencies.packages"],
+        "rPackages": ["QCA"],
         "commands": [
             {
                 "text": "library(QCA)",
                 "visibility": "visible"
             }
         ],
-        "replacement": "Verify QCA package availability through provider-neutral dependency checks."
+        "replacement": "Attach QCA at startup independently of optional host transport packages."
     },
     {
         "id": "qca-workspace",
