@@ -37,6 +37,9 @@ import {
 import {
     createXYPlotDialogRuntime
 } from "../external/r/xyPlotDialogRuntime";
+import {
+    createFissDialogRuntime
+} from "../external/r/fissDialogRuntime";
 
 
 const registerRuntimeProxyCalls = function(options: {
@@ -104,6 +107,25 @@ const registerRuntimeProxyCalls = function(options: {
             console.error("Unable to build QCA XY plot preview", error);
             return null;
         }
+    });
+
+    register(QCA_EXTERNAL_CALLS.GET_FISS_DIALOG_STATE, async (parameters) => {
+        try {
+            return await options.invoke(
+                "qca.getFissDialogState",
+                asPayloadRecord(parameters)
+            );
+        } catch (error) {
+            console.error("Unable to build QCA Fiss chart preview", error);
+            return null;
+        }
+    });
+
+    register(QCA_EXTERNAL_CALLS.EXPORT_FISS_PDF, async (parameters) => {
+        return await options.invoke(
+            "qca.exportFissPdf",
+            asPayloadRecord(parameters)
+        );
     });
 };
 
@@ -229,7 +251,12 @@ export const extendCustomJSApi = async function(
         loadTruthTables: truthTables.load,
         listTruthTableNames: truthTables.listAvailableNames
     });
+    const fiss = createFissDialogRuntime({
+        api: runtimeApi,
+        invoke
+    });
     let vennWorkspaceWatcherAttached = false;
+    let fissWorkspaceWatcherAttached = false;
 
     truthTables.registerObjectSource();
     registerObjectBindings({
@@ -352,6 +379,29 @@ export const extendCustomJSApi = async function(
     });
     register(QCA_EXTERNAL_CALLS.SYNC_VENN_DIALOG, (parameters) => {
         return venn.sync(parameters);
+    });
+
+    register(QCA_EXTERNAL_CALLS.INIT_FISS_DIALOG, async (parameters) => {
+        const payload = asPayloadRecord(parameters);
+        const state = await fiss.synchronize({
+            ...payload,
+            event: "init"
+        });
+
+        if (!fissWorkspaceWatcherAttached) {
+            fissWorkspaceWatcherAttached = true;
+            context.objects?.events?.on?.("workspaceDataUpdated", () => {
+                void fiss.synchronize({
+                    ...payload,
+                    event: "workspace"
+                });
+            });
+        }
+
+        return state;
+    });
+    register(QCA_EXTERNAL_CALLS.SYNC_FISS_DIALOG, (parameters) => {
+        return fiss.synchronize(parameters);
     });
 };
 

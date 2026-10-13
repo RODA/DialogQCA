@@ -135,6 +135,7 @@
   "menu.root.analyze.incoherent": "Konfiguracje niespójne",
   "menu.root.graphs.xyplot": "Wykres XY",
   "menu.root.graphs.venn": "Diagram Venna",
+  "menu.root.graphs.fiss": "Wykres Fissa",
   "DialogQCA (development build)": "DialogQCA (wersja rozwojowa)",
   "File": "Plik",
   "Edit": "Edycja",

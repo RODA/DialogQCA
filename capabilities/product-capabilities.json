@@ -93,6 +93,17 @@
         "rPackages": ["QCA", "venn"]
     },
     {
+        "capability": "qca.dialog.fiss",
+        "label": "Fiss chart dialog",
+        "requiredRuntime": [
+            "commands.visible",
+            "commands.invisible",
+            "workspace.objects",
+            "dependencies.packages"
+        ],
+        "rPackages": ["QCA"]
+    },
+    {
         "capability": "qca.packages.required",
         "label": "Required QCA package management",
         "requiredRuntime": ["commands.visible", "dependencies.packages"],

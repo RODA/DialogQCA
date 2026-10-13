@@ -49,7 +49,8 @@
                 "elements.82a5fd89-6c7f-44d2-be3e-d01588922e1b.value": "PRI",
                 "elements.6092ef14-dae5-4335-acb8-b438c88a2549.value": "frequency",
                 "elements.e8ae43b3-2ee7-4b59-b348-3355d1f5ba8a.label": "Run",
-                "elements.ae4ea037-0c66-4785-b860-ea5db90f6ff9.label": "Reset"
+                "elements.ae4ea037-0c66-4785-b860-ea5db90f6ff9.label": "Reset",
+                "elements.8399389e-7286-444a-a9c7-68d104b0f0cd.value": "use labels"
             },
             "de_DE": {
                 "messages.noDatasetSelected": "Kein Datensatz ausgewählt",
@@ -76,7 +77,8 @@
                 "elements.82a5fd89-6c7f-44d2-be3e-d01588922e1b.value": "PRI",
                 "elements.6092ef14-dae5-4335-acb8-b438c88a2549.value": "Häufigkeit",
                 "elements.e8ae43b3-2ee7-4b59-b348-3355d1f5ba8a.label": "Ausführen",
-                "elements.ae4ea037-0c66-4785-b860-ea5db90f6ff9.label": "Reset"
+                "elements.ae4ea037-0c66-4785-b860-ea5db90f6ff9.label": "Reset",
+                "elements.8399389e-7286-444a-a9c7-68d104b0f0cd.value": "use labels"
             },
             "fr_FR": {
                 "messages.noDatasetSelected": "Aucun jeu de données sélectionné",
@@ -103,7 +105,8 @@
                 "elements.82a5fd89-6c7f-44d2-be3e-d01588922e1b.value": "PRI",
                 "elements.6092ef14-dae5-4335-acb8-b438c88a2549.value": "fréquence",
                 "elements.e8ae43b3-2ee7-4b59-b348-3355d1f5ba8a.label": "Exécuter",
-                "elements.ae4ea037-0c66-4785-b860-ea5db90f6ff9.label": "Reset"
+                "elements.ae4ea037-0c66-4785-b860-ea5db90f6ff9.label": "Reset",
+                "elements.8399389e-7286-444a-a9c7-68d104b0f0cd.value": "use labels"
             },
             "pl_PL": {
                 "messages.noDatasetSelected": "Nie wybrano zbioru danych",
@@ -130,7 +133,8 @@
                 "elements.82a5fd89-6c7f-44d2-be3e-d01588922e1b.value": "PRI",
                 "elements.6092ef14-dae5-4335-acb8-b438c88a2549.value": "częstość",
                 "elements.e8ae43b3-2ee7-4b59-b348-3355d1f5ba8a.label": "Uruchom",
-                "elements.ae4ea037-0c66-4785-b860-ea5db90f6ff9.label": "Resetuj"
+                "elements.ae4ea037-0c66-4785-b860-ea5db90f6ff9.label": "Resetuj",
+                "elements.8399389e-7286-444a-a9c7-68d104b0f0cd.value": "use labels"
             },
             "es_ES": {
                 "messages.noDatasetSelected": "No se seleccionó ningún conjunto de datos",
@@ -157,7 +161,8 @@
                 "elements.82a5fd89-6c7f-44d2-be3e-d01588922e1b.value": "PRI",
                 "elements.6092ef14-dae5-4335-acb8-b438c88a2549.value": "frecuencia",
                 "elements.e8ae43b3-2ee7-4b59-b348-3355d1f5ba8a.label": "Ejecutar",
-                "elements.ae4ea037-0c66-4785-b860-ea5db90f6ff9.label": "Reset"
+                "elements.ae4ea037-0c66-4785-b860-ea5db90f6ff9.label": "Reset",
+                "elements.8399389e-7286-444a-a9c7-68d104b0f0cd.value": "use labels"
             },
             "ro_RO": {
                 "messages.noDatasetSelected": "Niciun set de date selectat",
@@ -184,7 +189,8 @@
                 "elements.82a5fd89-6c7f-44d2-be3e-d01588922e1b.value": "PRI",
                 "elements.6092ef14-dae5-4335-acb8-b438c88a2549.value": "frecvență",
                 "elements.e8ae43b3-2ee7-4b59-b348-3355d1f5ba8a.label": "Rulează",
-                "elements.ae4ea037-0c66-4785-b860-ea5db90f6ff9.label": "Reset"
+                "elements.ae4ea037-0c66-4785-b860-ea5db90f6ff9.label": "Reset",
+                "elements.8399389e-7286-444a-a9c7-68d104b0f0cd.value": "use labels"
             },
             "el_GR": {
                 "messages.noDatasetSelected": "Δεν επιλέχθηκε σύνολο δεδομένων",
@@ -211,7 +217,8 @@
                 "elements.82a5fd89-6c7f-44d2-be3e-d01588922e1b.value": "PRI",
                 "elements.6092ef14-dae5-4335-acb8-b438c88a2549.value": "συχνότητα",
                 "elements.e8ae43b3-2ee7-4b59-b348-3355d1f5ba8a.label": "Εκτέλεση",
-                "elements.ae4ea037-0c66-4785-b860-ea5db90f6ff9.label": "Επαναφορά"
+                "elements.ae4ea037-0c66-4785-b860-ea5db90f6ff9.label": "Επαναφορά",
+                "elements.8399389e-7286-444a-a9c7-68d104b0f0cd.value": "use labels"
             }
         }
     },
@@ -509,7 +516,7 @@
         {
             "id": "74a3aa2b-4484-4be3-aea4-6237e570a054",
             "left": 20,
-            "top": 265,
+            "top": 290,
             "type": "Checkbox",
             "nameid": "show_cases",
             "size": 14,
@@ -525,7 +532,7 @@
         {
             "id": "b68f2260-e8bd-4dea-aa6c-f26b7f206878",
             "left": 20,
-            "top": 290,
+            "top": 315,
             "type": "Checkbox",
             "nameid": "deviant_cases",
             "size": 14,
@@ -601,7 +608,7 @@
         {
             "id": "986a1963-5baa-4a4f-80db-f8249cb01009",
             "left": 39,
-            "top": 265,
+            "top": 290,
             "type": "Label",
             "nameid": "label8",
             "maxWidth": 140,
@@ -621,7 +628,7 @@
         {
             "id": "d7d07201-51f3-49fe-85ab-2d94b4f9e554",
             "left": 39,
-            "top": 290,
+            "top": 315,
             "type": "Label",
             "nameid": "label9",
             "maxWidth": 140,
@@ -858,6 +865,41 @@
             "icon": "none",
             "iconSize": 0,
             "height": 22
+        },
+        {
+            "id": "ef7475eb-2eb8-4fe1-ae01-cb8210075b00",
+            "type": "Checkbox",
+            "nameid": "use_labels",
+            "left": 20,
+            "top": 265,
+            "size": 14,
+            "fill": true,
+            "color": "#70a470",
+            "borderColor": "#777777",
+            "disabledColor": "#dedede",
+            "isChecked": false,
+            "isEnabled": true,
+            "isVisible": true,
+            "elementIds": ""
+        },
+        {
+            "id": "8399389e-7286-444a-a9c7-68d104b0f0cd",
+            "type": "Label",
+            "nameid": "label17",
+            "left": 39,
+            "top": 265,
+            "maxWidth": 200,
+            "lineClamp": 1,
+            "fontColor": "#000000",
+            "value": "use labels",
+            "icon": "none",
+            "iconSize": 0,
+            "align": "left",
+            "valign": "top",
+            "rotate": 0,
+            "isEnabled": true,
+            "isVisible": true,
+            "elementIds": ""
         }
     ],
     "script": {

@@ -76,6 +76,14 @@
                 "type": "product-dialog",
                 "dialog": "venn",
                 "capability": "qca.dialog.venn"
+            },
+            {
+                "id": "QcaFiss",
+                "labelKey": "menu.root.graphs.fiss",
+                "label": "Fiss chart",
+                "type": "product-dialog",
+                "dialog": "fiss",
+                "capability": "qca.dialog.fiss"
             }
         ]
     },

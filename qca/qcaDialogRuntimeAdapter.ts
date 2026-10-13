@@ -1,12 +1,14 @@
 import type { DialogControlModel } from "../runtime/dialogControlModel";
 import {
     applyQcaCalibrateDialogState,
+    applyQcaFissDialogState,
     applyQcaVennDialogState,
     applyQcaXYPlotDialogState
 } from "./qcaDialogControlAdapters";
 import type { QcaCalibrateDialogViewState } from "./qcaCalibrateDialog";
 import type { QcaVennDialogState } from "./qcaVennDialog";
 import type { QcaXYPlotDialogState } from "./qcaXYPlotDialog";
+import type { QcaFissDialogState } from "./qcaFissDialog";
 
 
 const asRecord = function(value: unknown): Record<string, unknown> {
@@ -42,6 +44,28 @@ export const applyQcaExternalCallResultToControls = function(
             customInput: asText(parameters.customInput),
             plot: asText(parameters.target || parameters.plot)
         }, value as QcaVennDialogState);
+
+        return true;
+    }
+
+    if (name === "qca.initializeFissDialog" || name === "qca.syncFissDialog" || name === "qca.getFissDialogState") {
+        applyQcaFissDialogState(model, {
+            solutionSelect: asText(parameters.solutionSelect),
+            branchSelect: asText(parameters.branchSelect),
+            modelSelect: asText(parameters.modelSelect),
+            ambiguitySelect: asText(parameters.ambiguitySelect),
+            ambiguityLabel: asText(parameters.ambiguityLabel),
+            coreTermSelect: asText(parameters.coreTermSelect),
+            coreTermLabel: asText(parameters.coreTermLabel),
+            titleInput: asText(parameters.titleInput),
+            legendCheckbox: asText(parameters.legendCheckbox),
+            labelsCheckbox: asText(parameters.labelsCheckbox),
+            messageLabel: asText(parameters.messageLabel),
+            plot: asText(parameters.plot || parameters.target)
+        }, value as QcaFissDialogState, {
+            preserveTitle: name === "qca.syncFissDialog"
+                || asText(parameters.event) === "title"
+        });
 
         return true;
     }

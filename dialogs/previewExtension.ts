@@ -10,6 +10,10 @@ import {
 import {
     qcaXYPlotRendererApi
 } from "../qca/xyPlotRenderer";
+import {
+    qcaFissRendererApi
+} from "../qca/fissRenderer";
+import type { QcaFissRenderPayload } from "../qca/qcaFissDialog";
 
 
 const isVennPayload = function(payload: unknown): boolean {
@@ -39,6 +43,19 @@ const isXYPlotPayload = function(payload: unknown): boolean {
 };
 
 
+const isFissPayload = function(payload: unknown): payload is QcaFissRenderPayload {
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+        return false;
+    }
+
+    const record = payload as Record<string, unknown>;
+
+    return record.kind === "fiss"
+        && Array.isArray(record.conditions)
+        && Array.isArray(record.configurations);
+};
+
+
 export const productDialogPreviewExtension: ProductDialogPreviewExtension = {
     applyExternalCallResult: function(context) {
         qcaDialogRuntimeAdapterApi.applyQcaExternalCallResultToControls(
@@ -49,6 +66,11 @@ export const productDialogPreviewExtension: ProductDialogPreviewExtension = {
         );
     },
     renderPlotPayload: function(host, payload) {
+        if (isFissPayload(payload)) {
+            qcaFissRendererApi.renderFissChart(host, payload);
+            return true;
+        }
+
         if (isVennPayload(payload)) {
             qcaVennRendererApi.renderVennDiagram(
                 host,

@@ -23,6 +23,10 @@ export const QCA_EXTERNAL_CALLS = Object.freeze({
     RENDER_VENN: "qca.renderVenn",
     INIT_VENN_DIALOG: "qca.initializeVennDialog",
     SYNC_VENN_DIALOG: "qca.syncVennDialog",
+    GET_FISS_DIALOG_STATE: "qca.getFissDialogState",
+    EXPORT_FISS_PDF: "qca.exportFissPdf",
+    INIT_FISS_DIALOG: "qca.initializeFissDialog",
+    SYNC_FISS_DIALOG: "qca.syncFissDialog",
 
     // Reserved for a future "filter cases" feature. Nothing answers this yet,
     // and the object reference resolver falls back to the plain object name

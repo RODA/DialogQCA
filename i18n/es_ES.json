@@ -135,6 +135,7 @@
   "menu.root.analyze.incoherent": "Configuraciones incoherentes",
   "menu.root.graphs.xyplot": "Gráfico XY",
   "menu.root.graphs.venn": "Diagrama de Venn",
+  "menu.root.graphs.fiss": "Gráfico Fiss",
   "DialogQCA (development build)": "DialogQCA (versión de desarrollo)",
   "File": "&Archivo",
   "Edit": "&Editar",

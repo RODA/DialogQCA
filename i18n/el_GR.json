@@ -135,6 +135,7 @@
   "menu.root.analyze.incoherent": "Ασυνεπείς διαμορφώσεις",
   "menu.root.graphs.xyplot": "Διάγραμμα XY",
   "menu.root.graphs.venn": "Διάγραμμα Venn",
+  "menu.root.graphs.fiss": "Διάγραμμα Fiss",
   "DialogQCA (development build)": "DialogQCA (έκδοση ανάπτυξης)",
   "File": "&Αρχείο",
   "Edit": "&Επεξεργασία",

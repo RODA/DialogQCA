@@ -10,6 +10,7 @@ import {
 import type { QcaCalibrateDialogViewState } from "./qcaCalibrateDialog";
 import type { QcaVennDialogState } from "./qcaVennDialog";
 import type { QcaXYPlotDialogState } from "./qcaXYPlotDialog";
+import type { QcaFissDialogState } from "./qcaFissDialog";
 
 
 export interface QcaVennDialogControls {
@@ -27,6 +28,22 @@ export interface QcaXYPlotDialogControls {
     measureLabels: string[];
     measureValues: string[];
     separators: string[];
+    plot: string;
+}
+
+
+export interface QcaFissDialogControls {
+    solutionSelect: string;
+    branchSelect: string;
+    modelSelect: string;
+    ambiguitySelect: string;
+    ambiguityLabel: string;
+    coreTermSelect: string;
+    coreTermLabel: string;
+    titleInput: string;
+    legendCheckbox: string;
+    labelsCheckbox: string;
+    messageLabel: string;
     plot: string;
 }
 
@@ -96,6 +113,42 @@ export const applyQcaVennDialogState = function(
     setDialogControlSelected(model, controls.truthTableSelect, state.selectedTruthTable);
     setDialogControlVisible(model, controls.customInput, state.renderPayload.showCustom);
     setDialogControlPlotPayload(model, controls.plot, state.renderPayload);
+};
+
+
+export const applyQcaFissDialogState = function(
+    model: DialogControlModel,
+    controls: QcaFissDialogControls,
+    state: QcaFissDialogState,
+    options: { preserveTitle?: boolean } = {}
+): void {
+    setDialogControlValue(model, controls.solutionSelect, state.solutionNames);
+    setDialogControlSelected(model, controls.solutionSelect, state.selectedSolution);
+    setDialogControlValue(model, controls.branchSelect, state.branches);
+    setDialogControlSelected(model, controls.branchSelect, state.selectedBranch);
+    setDialogControlValue(model, controls.modelSelect, state.models);
+    setDialogControlSelected(model, controls.modelSelect, state.selectedModel);
+    setDialogControlValue(model, controls.ambiguitySelect, state.ambiguities.map((entry) => {
+        return entry.configuration;
+    }));
+    setDialogControlSelected(model, controls.ambiguitySelect, state.selectedAmbiguity);
+    setDialogControlValue(model, controls.coreTermSelect, state.coreCandidates);
+    setDialogControlSelected(model, controls.coreTermSelect, state.selectedCoreTerm);
+    if (!options.preserveTitle) {
+        setDialogControlValue(model, controls.titleInput, state.title);
+    }
+    setDialogControlChecked(model, controls.legendCheckbox, state.legend);
+    setDialogControlChecked(model, controls.labelsCheckbox, state.useLabels);
+    setDialogControlValue(model, controls.messageLabel, state.message);
+
+    const showAmbiguity = state.ambiguities.length > 0;
+
+    setDialogControlVisible(model, controls.ambiguityLabel, showAmbiguity);
+    setDialogControlVisible(model, controls.ambiguitySelect, showAmbiguity);
+    setDialogControlVisible(model, controls.coreTermLabel, showAmbiguity);
+    setDialogControlVisible(model, controls.coreTermSelect, showAmbiguity);
+    setDialogControlPlotPayload(model, controls.plot, state.renderPayload);
+    setDialogControlValue(model, "__syntaxCommand", state.command);
 };
 
 
@@ -218,6 +271,7 @@ export const applyQcaXYPlotDialogState = function(
 
 
 export const qcaDialogControlAdaptersApi = {
+    applyQcaFissDialogState,
     applyQcaCalibrateDialogState,
     applyQcaVennDialogState,
     applyQcaXYPlotDialogState

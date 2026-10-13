@@ -498,12 +498,557 @@ qca_truth_tables <- function() {
 }
 
 
+qca_fiss_solution_names <- function() {
+    object_names <- tryCatch(
+        ls(envir = .GlobalEnv, all.names = TRUE),
+        error = function(error) character(0)
+    )
+
+    object_names[vapply(object_names, function(object_name) {
+        object <- tryCatch(
+            get(object_name, envir = .GlobalEnv, inherits = FALSE),
+            error = function(error) NULL
+        )
+
+        inherits(object, "QCA_min") && length(object$i.sol)
+    }, logical(1))]
+}
+
+
+qca_fiss_named_strings <- function(value) {
+    if (is.null(value)) return(character(0))
+
+    if (is.list(value)) {
+        output <- vapply(value, function(entry) {
+            as.character(entry %||% "")[[1L]]
+        }, character(1))
+        names(output) <- names(value)
+        return(output)
+    }
+
+    output <- as.character(value)
+    names(output) <- names(value)
+    output
+}
+
+
+qca_fiss_named_json <- function(value) {
+    if (!length(value)) return("{}")
+
+    entries <- vapply(seq_along(value), function(index) {
+        paste0(
+            json_str(names(value)[index]), ":",
+            json_str(as.character(value[index]))
+        )
+    }, character(1))
+
+    paste0("{", paste(entries, collapse = ","), "}")
+}
+
+
+qca_fiss_candidates_json <- function(candidates) {
+    if (!length(candidates)) return("[]")
+
+    entries <- vapply(seq_along(candidates), function(index) {
+        paste0(
+            "{\"configuration\":", json_str(names(candidates)[index]),
+            ",\"terms\":", json_strv(as.character(candidates[[index]])),
+            "}"
+        )
+    }, character(1))
+
+    paste0("[", paste(entries, collapse = ","), "]")
+}
+
+
+qca_fiss_chart <- function(
+    object, branch, model, parsimonious = NULL, resolve = NULL
+) {
+    arguments <- list(
+        x = object,
+        branch = branch,
+        model = model
+    )
+
+    if (!is.null(parsimonious)) {
+        arguments$parsimonious <- parsimonious
+    }
+
+    if (
+        !is.null(resolve) &&
+        is.element("resolve", names(formals(QCA::fissChart)))
+    ) {
+        arguments$resolve <- resolve
+    }
+
+    do.call(QCA::fissChart, arguments)
+}
+
+
+qca_fiss_condition_labels <- function(
+    object, chart, use.labels = isTRUE(object$tt$options$use.labels)
+) {
+    conditions <- rownames(chart$values)
+
+    if (!use.labels) return(conditions)
+
+    categories <- object$tt$categories %||% list()
+    vapply(conditions, function(condition) {
+        values <- as.character(categories[[condition]] %||% character(0))
+        if (length(values) >= 2L && nzchar(values[[2L]])) {
+            values[[2L]]
+        }
+        else {
+            condition
+        }
+    }, character(1))
+}
+
+
+qca_fiss_outcome_label <- function(object, chart) {
+    label <- as.character(chart$outcome.label %||% "")[[1L]]
+    if (nzchar(label)) return(label)
+
+    outcome <- as.character(chart$outcome %||% object$tt$options$outcome %||% "")[[1L]]
+    if (isTRUE(object$tt$options$use.labels)) {
+        categories <- as.character(
+            (object$tt$categories %||% list())[[outcome]] %||% character(0)
+        )
+        index <- if (isTRUE(chart$neg.out)) 1L else 2L
+        if (length(categories) >= index && nzchar(categories[[index]])) {
+            return(categories[[index]])
+        }
+    }
+
+    paste0(if (isTRUE(chart$neg.out)) "~" else "", outcome)
+}
+
+
+qca_fiss_plot_command <- function(
+    object_name, branch, model, chart, title, legend, labels
+) {
+    quote_r <- function(value) {
+        encodeString(as.character(value), quote = "\"")
+    }
+    object_reference <- paste(
+        deparse(as.name(object_name), width.cutoff = 500L),
+        collapse = ""
+    )
+    chart_args <- c(
+        object_reference,
+        paste0("branch = ", quote_r(branch)),
+        paste0("model = ", model)
+    )
+    ambiguous <- lengths(chart$candidates) > 1L
+
+    if (any(ambiguous)) {
+        selected <- unname(chart$parsimonious)
+        chart_args <- c(
+            chart_args,
+            paste0(
+                "parsimonious = c(",
+                paste(vapply(selected, quote_r, character(1)), collapse = ", "),
+                ")"
+            )
+        )
+    }
+
+    plot_args <- c(
+        paste0("fissChart(", paste(chart_args, collapse = ", "), ")"),
+        paste0("labels = c(", paste(vapply(labels, quote_r, character(1)), collapse = ", "), ")"),
+        paste0("main = ", quote_r(title)),
+        paste0("legend = ", if (legend) "TRUE" else "FALSE")
+    )
+
+    paste0("plot(", paste(plot_args, collapse = ", "), ")")
+}
+
+
+qca_fiss_dialog_state <- function(params) {
+    solution_names <- qca_fiss_solution_names()
+    selected_solution <- trimws(as.character(
+        params$solutionName %||% params$name %||% ""
+    ))
+
+    if (!is.element(selected_solution, solution_names)) {
+        selected_solution <- if (length(solution_names)) {
+            solution_names[[length(solution_names)]]
+        } else {
+            ""
+        }
+    }
+
+    requested_title <- as.character(params$title %||% "")[[1L]]
+
+    empty_result <- function(message = "") {
+        result <- list(
+            solutionNames = solution_names,
+            selectedSolution = selected_solution,
+            branches = character(0),
+            selectedBranch = "",
+            models = character(0),
+            selectedModel = "",
+            ambiguities = list(),
+            selectedAmbiguity = "",
+            coreCandidates = character(0),
+            selectedCoreTerm = "",
+            coreSelections = character(0),
+            title = requested_title,
+            legend = isTRUE(params$legend),
+            useLabels = isTRUE(params$useLabels),
+            command = "",
+            message = message,
+            renderPayload = list(
+                kind = "fiss",
+                title = requested_title,
+                conditions = character(0),
+                configurations = character(0),
+                expressions = character(0),
+                values = list(),
+                roles = list(),
+                fit = list(),
+                solutionFit = numeric(0),
+                legend = isTRUE(params$legend),
+                message = message
+            )
+        )
+
+        result_json <- paste0(
+            "{\"solutionNames\":", json_strv(result$solutionNames),
+            ",\"selectedSolution\":", json_str(result$selectedSolution),
+            ",\"branches\":[],\"selectedBranch\":\"\",",
+            "\"models\":[],\"selectedModel\":\"\",",
+            "\"ambiguities\":[],\"selectedAmbiguity\":\"\",",
+            "\"coreCandidates\":[],\"selectedCoreTerm\":\"\",",
+            "\"coreSelections\":{},\"title\":", json_str(requested_title), ",",
+            "\"legend\":", json_bool(result$legend),
+            ",\"useLabels\":", json_bool(result$useLabels),
+            ",\"command\":\"\",\"message\":", json_str(message),
+            ",\"renderPayload\":{\"kind\":\"fiss\",\"title\":",
+            json_str(requested_title), ",",
+            "\"conditions\":[],\"configurations\":[],\"expressions\":[],",
+            "\"values\":[],\"roles\":[],\"fit\":[],\"solutionFit\":[],",
+            "\"legend\":", json_bool(result$legend),
+            ",\"message\":", json_str(message), "}}"
+        )
+
+        list(ok = TRUE, result = result, result_json = result_json)
+    }
+
+    if (!nzchar(selected_solution)) {
+        return(empty_result("Create an intermediate QCA solution before opening a Fiss chart."))
+    }
+
+    if (
+        !requireNamespace("QCA", quietly = TRUE) ||
+        !exists("fissChart", envir = asNamespace("QCA"), inherits = FALSE)
+    ) {
+        return(empty_result("This dialog requires a QCA version that provides fissChart()."))
+    }
+
+    object <- tryCatch(
+        get(selected_solution, envir = .GlobalEnv, inherits = FALSE),
+        error = function(error) NULL
+    )
+    branches <- names(object$i.sol %||% list())
+    selected_branch <- trimws(as.character(params$branch %||% ""))
+    if (!is.element(selected_branch, branches)) {
+        selected_branch <- if (length(branches)) branches[[1L]] else ""
+    }
+
+    branch_solution <- object$i.sol[[selected_branch]]
+    models <- branch_solution$solution %||% list()
+    if (!is.list(models)) models <- list(models)
+    model_names <- paste0("M", seq_along(models))
+    selected_model <- trimws(as.character(params$model %||% ""))
+    if (!is.element(selected_model, model_names)) {
+        selected_model <- if (length(model_names)) model_names[[1L]] else ""
+    }
+    model_index <- match(selected_model, model_names)
+
+    preview <- tryCatch(
+        qca_fiss_chart(
+            object,
+            branch = selected_branch,
+            model = model_index,
+            resolve = "first"
+        ),
+        error = function(error) error
+    )
+    if (inherits(preview, "error")) {
+        state <- empty_result(conditionMessage(preview))
+        state$result$branches <- branches
+        state$result$selectedBranch <- selected_branch
+        state$result$models <- model_names
+        state$result$selectedModel <- selected_model
+        state$result_json <- sub(
+            "\"branches\":[],\"selectedBranch\":\"\",\"models\":[],\"selectedModel\":\"\"",
+            paste0(
+                "\"branches\":", json_strv(branches),
+                ",\"selectedBranch\":", json_str(selected_branch),
+                ",\"models\":", json_strv(model_names),
+                ",\"selectedModel\":", json_str(selected_model)
+            ),
+            state$result_json,
+            fixed = TRUE
+        )
+        return(state)
+    }
+
+    core_selections <- qca_fiss_named_strings(params$coreSelections)
+    selected_terms <- preview$parsimonious
+    for (configuration in names(preview$candidates)) {
+        proposed <- if (is.element(configuration, names(core_selections))) {
+            core_selections[[configuration]]
+        } else {
+            ""
+        }
+        if (is.element(proposed, preview$candidates[[configuration]])) {
+            selected_terms[[configuration]] <- proposed
+        }
+    }
+
+    chart <- qca_fiss_chart(
+        object,
+        branch = selected_branch,
+        model = model_index,
+        parsimonious = selected_terms
+    )
+    core_selections <- chart$parsimonious
+    ambiguous <- chart$candidates[lengths(chart$candidates) > 1L]
+    ambiguous_names <- names(ambiguous)
+    selected_ambiguity <- trimws(as.character(params$ambiguity %||% ""))
+    if (!is.element(selected_ambiguity, ambiguous_names)) {
+        selected_ambiguity <- if (length(ambiguous_names)) ambiguous_names[[1L]] else ""
+    }
+    core_candidates <- if (nzchar(selected_ambiguity)) {
+        ambiguous[[selected_ambiguity]]
+    } else {
+        character(0)
+    }
+    selected_core <- if (nzchar(selected_ambiguity)) {
+        chart$parsimonious[[selected_ambiguity]]
+    } else {
+        ""
+    }
+    title <- requested_title
+    if (!nzchar(trimws(title))) {
+        title <- paste0("Configurations for ", qca_fiss_outcome_label(object, chart))
+    }
+    legend <- isTRUE(params$legend)
+    use_labels <- if (is.null(params$useLabels)) {
+        isTRUE(object$tt$options$use.labels)
+    } else {
+        isTRUE(params$useLabels)
+    }
+    condition_labels <- qca_fiss_condition_labels(object, chart, use_labels)
+    configurations <- colnames(chart$values)
+    configuration_labels <- as.character(seq_along(configurations))
+    fit <- lapply(seq_along(configurations), function(index) {
+        row <- chart$fit[index, , drop = FALSE]
+        c(
+            consistency = as.numeric(row$inclS),
+            rawCoverage = as.numeric(row$covS),
+            uniqueCoverage = as.numeric(row$covU)
+        )
+    })
+    solution_fit <- c(
+        consistency = as.numeric(chart$solution.fit$inclS[[1L]]),
+        coverage = as.numeric(chart$solution.fit$covS[[1L]])
+    )
+    command <- qca_fiss_plot_command(
+        selected_solution,
+        selected_branch,
+        model_index,
+        chart,
+        title,
+        legend,
+        condition_labels
+    )
+    message <- if (length(ambiguous)) {
+        "Review the core term for each ambiguous configuration."
+    } else {
+        "Core conditions have a unique parsimonious match."
+    }
+    values <- lapply(seq_len(nrow(chart$values)), function(index) {
+        unname(chart$values[index, ])
+    })
+    roles <- lapply(seq_len(nrow(chart$roles)), function(index) {
+        unname(chart$roles[index, ])
+    })
+    render_payload <- list(
+        kind = "fiss",
+        title = title,
+        conditions = condition_labels,
+        configurations = configuration_labels,
+        expressions = configurations,
+        values = values,
+        roles = roles,
+        fit = fit,
+        solutionFit = solution_fit,
+        legend = legend,
+        message = ""
+    )
+    fit_json <- if (length(fit)) {
+        paste0("[", paste(vapply(fit, function(row) {
+            paste0(
+                "{\"consistency\":", json_num(row[["consistency"]]),
+                ",\"rawCoverage\":", json_num(row[["rawCoverage"]]),
+                ",\"uniqueCoverage\":",
+                if (is.na(row[["uniqueCoverage"]])) "null" else json_num(row[["uniqueCoverage"]]),
+                "}"
+            )
+        }, character(1)), collapse = ","), "]")
+    } else {
+        "[]"
+    }
+    payload_json <- paste0(
+        "{\"kind\":\"fiss\",\"title\":", json_str(title),
+        ",\"conditions\":", json_strv(render_payload$conditions),
+        ",\"configurations\":", json_strv(configuration_labels),
+        ",\"expressions\":", json_strv(configurations),
+        ",\"values\":", qca_string_matrix_json(values),
+        ",\"roles\":", qca_string_matrix_json(roles),
+        ",\"fit\":", fit_json,
+        ",\"solutionFit\":{\"consistency\":", json_num(solution_fit[["consistency"]]),
+        ",\"coverage\":", json_num(solution_fit[["coverage"]]), "}",
+        ",\"legend\":", json_bool(legend),
+        ",\"message\":\"\"}"
+    )
+    result <- list(
+        solutionNames = solution_names,
+        selectedSolution = selected_solution,
+        branches = branches,
+        selectedBranch = selected_branch,
+        models = model_names,
+        selectedModel = selected_model,
+        ambiguities = ambiguous,
+        selectedAmbiguity = selected_ambiguity,
+        coreCandidates = core_candidates,
+        selectedCoreTerm = selected_core,
+        coreSelections = core_selections,
+        title = title,
+        legend = legend,
+        useLabels = use_labels,
+        command = command,
+        message = message,
+        renderPayload = render_payload
+    )
+    result_json <- paste0(
+        "{\"solutionNames\":", json_strv(solution_names),
+        ",\"selectedSolution\":", json_str(selected_solution),
+        ",\"branches\":", json_strv(branches),
+        ",\"selectedBranch\":", json_str(selected_branch),
+        ",\"models\":", json_strv(model_names),
+        ",\"selectedModel\":", json_str(selected_model),
+        ",\"ambiguities\":", qca_fiss_candidates_json(ambiguous),
+        ",\"selectedAmbiguity\":", json_str(selected_ambiguity),
+        ",\"coreCandidates\":", json_strv(core_candidates),
+        ",\"selectedCoreTerm\":", json_str(selected_core),
+        ",\"coreSelections\":", qca_fiss_named_json(core_selections),
+        ",\"title\":", json_str(title),
+        ",\"legend\":", json_bool(legend),
+        ",\"useLabels\":", json_bool(use_labels),
+        ",\"command\":", json_str(command),
+        ",\"message\":", json_str(message),
+        ",\"renderPayload\":", payload_json,
+        "}"
+    )
+
+    list(ok = TRUE, result = result, result_json = result_json)
+}
+
+
+qca_fiss_export_pdf <- function(params) {
+    state <- qca_fiss_dialog_state(params)
+    if (!isTRUE(state$ok)) return(state)
+
+    selection <- state$result
+    if (!nzchar(selection$selectedSolution)) {
+        return(qca_error(selection$message %||% "missing-intermediate-solution"))
+    }
+
+    object <- tryCatch(
+        get(selection$selectedSolution, envir = .GlobalEnv, inherits = FALSE),
+        error = function(error) error
+    )
+    if (inherits(object, "error")) return(qca_error(conditionMessage(object)))
+
+    models <- object$i.sol[[selection$selectedBranch]]$solution
+    if (!is.list(models)) models <- list(models)
+    model <- match(selection$selectedModel, paste0("M", seq_along(models)))
+    if (is.na(model)) return(qca_error("missing-intermediate-model"))
+
+    chart <- tryCatch(
+        qca_fiss_chart(
+            object,
+            branch = selection$selectedBranch,
+            model = model,
+            parsimonious = selection$coreSelections
+        ),
+        error = function(error) error
+    )
+    if (inherits(chart, "error")) return(qca_error(conditionMessage(chart)))
+
+    labels <- qca_fiss_condition_labels(object, chart, selection$useLabels)
+    render <- function(path, width, height) {
+        grDevices::pdf(
+            path, width = width, height = height,
+            onefile = TRUE, paper = "special"
+        )
+        on.exit(grDevices::dev.off(), add = TRUE)
+        graphics::plot(
+            chart,
+            labels = labels,
+            main = selection$title,
+            legend = isTRUE(selection$legend)
+        )
+    }
+    probe <- tempfile(fileext = ".pdf")
+    target <- tempfile(fileext = ".pdf")
+    on.exit(unlink(c(probe, target)), add = TRUE)
+
+    grob <- tryCatch(render(probe, 100, 100), error = function(error) error)
+    if (inherits(grob, "error")) return(qca_error(conditionMessage(grob)))
+
+    size <- suppressWarnings(as.numeric(attr(grob, "size")))
+    if (length(size) != 2L || any(!is.finite(size)) || any(size <= 0)) {
+        return(qca_error("fiss-chart-size-unavailable"))
+    }
+    size <- ceiling(size * 100) / 100 + 0.02
+
+    output <- tryCatch(
+        render(target, size[[1L]], size[[2L]]),
+        error = function(error) error
+    )
+    if (inherits(output, "error")) return(qca_error(conditionMessage(output)))
+
+    bytes <- readBin(target, what = "raw", n = file.info(target)$size)
+    hex <- paste(sprintf("%02x", as.integer(bytes)), collapse = "")
+    result <- list(
+        dataHex = hex,
+        width = size[[1L]],
+        height = size[[2L]]
+    )
+    result_json <- paste0(
+        "{\"dataHex\":", json_str(hex),
+        ",\"width\":", json_num(size[[1L]]),
+        ",\"height\":", json_num(size[[2L]]),
+        "}"
+    )
+
+    list(ok = TRUE, result = result, result_json = result_json)
+}
+
+
 runtime_dispatch_product_method <- function(method, params) {
     switch(method,
         "workspace.truth_tables" = qca_truth_tables(),
         "workspace.dataset_calibrate_thresholds" = qca_calibration_thresholds(params),
         "workspace.dataset_calibrate_preview" = qca_calibration_preview(params),
         "workspace.dataset_xyplot_preview" = qca_xyplot_preview(params),
+        "workspace.fiss_dialog_state" = qca_fiss_dialog_state(params),
+        "workspace.fiss_export_pdf" = qca_fiss_export_pdf(params),
         NULL
     )
 }

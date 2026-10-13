@@ -75,6 +75,7 @@ const buildCommand = () => {
 
   if (isChecked(complete)) optional.push('complete = TRUE');
   if (isChecked(use_letters)) optional.push('use.letters = TRUE');
+  if (isChecked(use_labels)) optional.push('use.labels = TRUE');
   if (isChecked(show_cases)) optional.push('show.cases = TRUE');
   if (isChecked(show_cases) && isChecked(deviant_cases)) optional.push('dcc = TRUE');
 
@@ -111,10 +112,12 @@ const refresh = () => {
 };
 
 enableSearch(c_datasets, c_outcome, c_conditions);
+
 callExternal('rememberVariableSelections', {
   source: c_datasets,
   dependents: [c_outcome, c_conditions]
 });
+
 const objectBinding = bindObjects({
   dialog: 'qca.truthTable',
   datasets: c_datasets,
@@ -164,7 +167,18 @@ onChange(object_name, () => {
 });
 onChange(neg_out, refresh);
 onChange(complete, refresh);
-onChange(use_letters, refresh);
+onChange(use_letters, () => {
+  if (isChecked(use_letters)) {
+    uncheck(use_labels)
+  }
+  refresh();
+});
+onChange(use_labels, () => {
+  if (isChecked(use_labels)) {
+    uncheck(use_letters)
+  }
+  refresh();
+});
 onChange(show_cases, refresh);
 onChange(deviant_cases, refresh);
 onChange(sort_by, refresh);

@@ -1,6 +1,7 @@
 import type {
     QcaCalibratePreviewRequest,
     QcaCalibrateThresholdRequest,
+    QcaFissDialogRequest,
     QcaRuntimeBindings,
     QcaXYPlotPreviewRequest
 } from "./qcaBindings";
@@ -18,6 +19,7 @@ import {
     createQcaVennDialogState
 } from "./qcaVennDialog";
 import type { QcaTruthTableEntry } from "./qcaVennDialog";
+import { normalizeQcaFissDialogState } from "./qcaFissDialog";
 
 
 export interface QcaExternalCallResult {
@@ -41,7 +43,11 @@ const implementedCalls = new Set([
     "qca.syncXYPlotDialog",
     "qca.initializeVennDialog",
     "qca.syncVennDialog",
-    "qca.renderVenn"
+    "qca.renderVenn",
+    "qca.getFissDialogState",
+    "qca.exportFissPdf",
+    "qca.initializeFissDialog",
+    "qca.syncFissDialog"
 ]);
 
 
@@ -219,6 +225,71 @@ export const createQcaExternalCallHost = function(bindings: QcaRuntimeBindings) 
                         xVariable: String(parameters.xVariable || parameters.xVariableName || ""),
                         yVariable: String(parameters.yVariable || parameters.yVariableName || "")
                     } satisfies QcaXYPlotPreviewRequest));
+                }
+
+                if (name === "qca.getFissDialogState" || name === "qca.initializeFissDialog" || name === "qca.syncFissDialog") {
+                    const solutionName = String(
+                        parameters.solutionName
+                            || getSelectedControlValue(parameters, String(parameters.solutionSelect || ""))
+                            || ""
+                    );
+                    const branch = String(
+                        parameters.branch
+                            || getSelectedControlValue(parameters, String(parameters.branchSelect || ""))
+                            || ""
+                    );
+                    const model = String(
+                        parameters.model
+                            || getSelectedControlValue(parameters, String(parameters.modelSelect || ""))
+                            || ""
+                    );
+                    const ambiguity = String(
+                        parameters.ambiguity
+                            || getSelectedControlValue(parameters, String(parameters.ambiguitySelect || ""))
+                            || ""
+                    );
+                    const title = parameters.title === undefined
+                        ? getControlValue(parameters, String(parameters.titleInput || ""))
+                        : String(parameters.title || "");
+                    const legend = parameters.legend === undefined
+                        ? getControlChecked(parameters, String(parameters.legendCheckbox || ""))
+                        : parameters.legend !== false;
+                    const coreSelections = getObject(parameters.coreSelections);
+                    const state = await bindings.getFissDialogState({
+                        solutionName,
+                        branch,
+                        model,
+                        ambiguity,
+                        coreSelections: Object.fromEntries(Object.entries(coreSelections).map(([key, value]) => {
+                            return [key, String(value ?? "")];
+                        })),
+                        title,
+                        legend,
+                        useLabels: parameters.useLabels === undefined
+                            ? name === "qca.initializeFissDialog" || parameters.event === "init"
+                                || parameters.event === "solution" || !parameters.labelsCheckbox
+                                ? undefined
+                                : getControlChecked(parameters, String(parameters.labelsCheckbox))
+                            : parameters.useLabels === true
+                    } satisfies QcaFissDialogRequest);
+
+                    return ok(name, normalizeQcaFissDialogState(state));
+                }
+
+                if (name === "qca.exportFissPdf") {
+                    return ok(name, await bindings.exportFissPdf({
+                        solutionName: String(parameters.solutionName || ""),
+                        branch: String(parameters.branch || ""),
+                        model: String(parameters.model || ""),
+                        ambiguity: String(parameters.ambiguity || ""),
+                        coreSelections: Object.fromEntries(Object.entries(
+                            getObject(parameters.coreSelections)
+                        ).map(([key, value]) => [key, String(value ?? "")])),
+                        title: String(parameters.title || ""),
+                        legend: parameters.legend === true,
+                        useLabels: typeof parameters.useLabels === "boolean"
+                            ? parameters.useLabels : undefined
+                    } satisfies QcaFissDialogRequest));
                 }
 
                 if (name === "qca.initializeXYPlotDialog" || name === "qca.syncXYPlotDialog") {

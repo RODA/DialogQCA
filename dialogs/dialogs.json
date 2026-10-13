@@ -113,5 +113,20 @@
                 "minimumVersion": "1.13"
             }
         ]
+    },
+    {
+        "id": "fiss",
+        "label": "Fiss chart",
+        "owner": "products/DialogQCA",
+        "targetHome": "products/DialogQCA/dialogs/r/fiss/",
+        "sourceFile": "r/fiss/dialog.json",
+        "status": "source-imported",
+        "replacement": "Run through the DialogCreator-compatible DialogForge dialog runtime.",
+        "rPackages": [
+            {
+                "name": "QCA",
+                "minimumVersion": "3.25.7"
+            }
+        ]
     }
 ]

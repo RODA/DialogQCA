@@ -135,6 +135,7 @@
   "menu.root.analyze.incoherent": "Configurații incoerente",
   "menu.root.graphs.xyplot": "Grafic XY",
   "menu.root.graphs.venn": "Diagramă Venn",
+  "menu.root.graphs.fiss": "Grafic Fiss",
   "DialogQCA (development build)": "DialogQCA (versiune de dezvoltare)",
   "File": "&Fișier",
   "Edit": "&Editează",

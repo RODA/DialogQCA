@@ -53,11 +53,32 @@ export interface QcaXYPlotPreviewRequest {
 }
 
 
+export interface QcaFissDialogRequest {
+    solutionName?: string;
+    branch?: string;
+    model?: string;
+    ambiguity?: string;
+    coreSelections?: Record<string, string>;
+    title?: string;
+    legend?: boolean;
+    useLabels?: boolean;
+}
+
+
+export interface QcaFissPdfExport {
+    dataHex: string;
+    width: number;
+    height: number;
+}
+
+
 export interface QcaRuntimeBindings {
     listTruthTables: () => Promise<Record<string, unknown>[]>;
     getCalibrateThresholds: (request: QcaCalibrateThresholdRequest) => Promise<Record<string, unknown>>;
     getCalibratePreview: (request: QcaCalibratePreviewRequest) => Promise<Record<string, unknown>>;
     getXYPlotPreview: (request: QcaXYPlotPreviewRequest) => Promise<Record<string, unknown>>;
+    getFissDialogState: (request: QcaFissDialogRequest) => Promise<Record<string, unknown>>;
+    exportFissPdf: (request: QcaFissDialogRequest) => Promise<QcaFissPdfExport>;
 }
 
 
@@ -131,6 +152,36 @@ export const createQcaRuntimeBindings = function(executor: QcaRuntimeExecutor): 
                 xVariableName: request.xVariable,
                 yVariableName: request.yVariable
             })));
+        },
+        getFissDialogState: async function(request: QcaFissDialogRequest): Promise<Record<string, unknown>> {
+            return asObject(parseRuntimePayload(await executor.execute("workspace.fiss_dialog_state", {
+                solutionName: request.solutionName,
+                branch: request.branch,
+                model: request.model,
+                ambiguity: request.ambiguity,
+                coreSelections: request.coreSelections,
+                title: request.title,
+                legend: request.legend,
+                useLabels: request.useLabels
+            })));
+        },
+        exportFissPdf: async function(request: QcaFissDialogRequest): Promise<QcaFissPdfExport> {
+            const value = asObject(parseRuntimePayload(await executor.execute("workspace.fiss_export_pdf", {
+                solutionName: request.solutionName,
+                branch: request.branch,
+                model: request.model,
+                ambiguity: request.ambiguity,
+                coreSelections: request.coreSelections,
+                title: request.title,
+                legend: request.legend,
+                useLabels: request.useLabels
+            })));
+
+            return {
+                dataHex: String(value.dataHex || ""),
+                width: Number(value.width || 0),
+                height: Number(value.height || 0)
+            };
         }
     };
 };
