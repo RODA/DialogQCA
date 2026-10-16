@@ -14,6 +14,8 @@ type VennPayload = {
 export interface VennRenderOptions {
     toolbarHost?: HTMLElement;
     toolbarControls?: HTMLElement;
+    toolbarExpression?: HTMLElement;
+    toolbarExpanded?: boolean;
     reset?: () => void;
     resetLabel?: string;
     windowTitle?: string;
@@ -278,12 +280,15 @@ export function renderVennDiagram(
 ) {
     const width = Math.max(1, host.clientWidth || 400);
     const height = Math.max(1, host.clientHeight || 400);
-    const payloadKey = JSON.stringify(payload);
+    const payloadKey = JSON.stringify([payload, options.toolbarExpanded]);
     const previous = previewStates.get(host);
     if (previous?.payloadKey === payloadKey
         && previous.width === width && previous.height === height) {
         return;
     }
+    const focusedInput = options.toolbarExpression?.contains(document.activeElement)
+        ? document.activeElement as HTMLElement
+        : null;
     previous?.events.abort();
     const preview = {
         zoom: previous?.zoom || 1, events: new AbortController(),
@@ -347,6 +352,10 @@ export function renderVennDiagram(
     if (options.toolbarControls) {
         toolbar.prepend(options.toolbarControls);
     }
+    toolbar.classList.toggle("venn-toolbar-expanded", options.toolbarExpanded === true);
+    if (options.toolbarExpression) {
+        toolbar.appendChild(options.toolbarExpression);
+    }
     if (options.toolbarHost) {
         options.toolbarHost.replaceChildren(toolbar);
         shell.appendChild(viewport);
@@ -354,6 +363,7 @@ export function renderVennDiagram(
         shell.append(toolbar, viewport);
     }
     host.appendChild(shell);
+    focusedInput?.focus({ preventScroll: true });
 
     if (typeof ResizeObserver === "function") {
         let pendingFrame = 0;

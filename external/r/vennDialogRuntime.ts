@@ -1,4 +1,8 @@
-import { getPlotResetButton, getPlotToolbarHost } from "../../qca/svgPlotToolbar";
+import {
+    getPlotResetButton,
+    getPlotToolbarHost,
+    setPlotToolbarExtraHeight
+} from "../../qca/svgPlotToolbar";
 import {
     renderVennDiagram
 } from "../../qca/vennRenderer";
@@ -58,11 +62,22 @@ export const createVennDialogRuntime = function(options: {
                     min-width: 60px;
                 }
                 .venn-toolbar-controls > .dm-select select { width: 100% !important; }
-                .venn-toolbar-controls > .dm-input {
-                    flex: 1 1 180px;
-                    min-width: 60px;
+                .plot-dialog-window-toolbar.venn-toolbar-expanded {
+                    display: grid;
+                    grid-template-columns: minmax(0, 1fr) auto;
+                    grid-template-rows: 34px 34px;
+                    gap: 0 6px;
+                    height: 68px;
                 }
-                .venn-toolbar-controls > .dm-input textarea {
+                .venn-toolbar-expression {
+                    position: static !important;
+                    inset: auto !important;
+                    grid-column: 1 / -1;
+                    grid-row: 2;
+                    width: 100% !important;
+                    min-width: 0;
+                }
+                .venn-toolbar-expression textarea {
                     width: 100% !important;
                     box-sizing: border-box;
                 }
@@ -70,7 +85,7 @@ export const createVennDialogRuntime = function(options: {
             controls.appendChild(style);
             toolbarControls.set(host, controls);
         }
-        for (const name of [source.customCheckbox, source.customLabel, source.truthTableSelect, source.customInput]) {
+        for (const name of [source.customCheckbox, source.customLabel, source.truthTableSelect]) {
             const node = options.api.getElementNode?.(asString(name));
             if (node instanceof HTMLElement) {
                 const wrapper = node.closest<HTMLElement>(".dm-el") || node;
@@ -144,13 +159,40 @@ export const createVennDialogRuntime = function(options: {
             const container = resetNode.closest<HTMLElement>(".dm-el") || resetNode;
             container.style.display = "none";
         }
+        const toolbarHost = getPlotToolbarHost(host);
+        const expanded = options.api.isChecked?.(asString(source.customCheckbox)) === true;
+        const wasExpanded = toolbarHost?.dataset.customExpanded === "true";
+        const input = options.api.getElementNode?.(asString(source.customInput));
+        const expression = input instanceof HTMLElement
+            ? input.closest<HTMLElement>(".dm-el") || input
+            : undefined;
+        expression?.classList.add("venn-toolbar-expression");
+        setPlotToolbarExtraHeight(host, expanded ? 34 : 0);
         renderVennDiagram(host, nextPayload, {
-            toolbarHost: getPlotToolbarHost(host),
+            toolbarHost,
             toolbarControls: moveControlsToToolbar(host, source),
+            toolbarExpression: expression,
+            toolbarExpanded: expanded,
             reset: resetButton ? () => resetButton.click() : undefined,
             resetLabel: asString(resetButton?.textContent) || "Reset",
             windowTitle: document.title || "Venn diagram"
         });
+
+        if (toolbarHost) {
+            toolbarHost.style.height = expanded ? "68px" : "34px";
+            toolbarHost.dataset.customExpanded = String(expanded);
+            if (expanded && !wasExpanded && input instanceof HTMLElement) {
+                // Wait for window resizing and its diagram redraw before focusing.
+                requestAnimationFrame(() => {
+                    if (toolbarHost.dataset.customExpanded === "true") {
+                        const field = input.matches("input, textarea")
+                            ? input
+                            : input.querySelector<HTMLElement>("input, textarea");
+                        field?.focus({ preventScroll: true });
+                    }
+                });
+            }
+        }
 
         return null;
     };

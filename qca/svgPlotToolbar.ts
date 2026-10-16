@@ -17,6 +17,7 @@ export const createSvgPlotToolbar = function(options: SvgPlotToolbarOptions): HT
     const current = window as Window & {
         DialogForgeSvgPlotToolbar?: {
             createToolbar: (options: SvgPlotToolbarOptions) => HTMLElement;
+            setExtraHeight: (root: HTMLElement, height: number) => void;
         };
     };
     if (!current.DialogForgeSvgPlotToolbar) {
@@ -51,4 +52,17 @@ export const getPlotResetButton = function(node: unknown): HTMLElement | null {
     return node.matches("button, .smart-button")
         ? node
         : node.querySelector<HTMLElement>("button, .smart-button");
+};
+
+
+export const setPlotToolbarExtraHeight = function(plot: HTMLElement, height: number): void {
+    const root = plot.closest<HTMLElement>(".dialog-root");
+    if (root) {
+        const current = window as Window & {
+            DialogForgeSvgPlotToolbar?: {
+                setExtraHeight: (root: HTMLElement, height: number) => void;
+            };
+        };
+        current.DialogForgeSvgPlotToolbar?.setExtraHeight(root, height);
+    }
 };

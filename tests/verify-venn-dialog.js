@@ -131,16 +131,37 @@ async function exerciseDialog(dialog, resize, copySize) {
     const original = await checkSquare(dialog);
     await checkCaseRegions(dialog);
 
+    const originalHeight = await toolbar.evaluate(() => innerHeight);
     await custom.click();
     await input.waitFor({ state: "visible" });
-    await input.fill("DEV*URB");
+    await waitUntil(async () => await toolbar.evaluate(() => innerHeight) === originalHeight + 34,
+        "Custom row did not enlarge the dialog by 34 pixels");
+    assert.equal((await checkSquare(dialog)).width, original.width);
+    assert.equal(await toolbar.evaluate((node) => node.offsetHeight), 68);
+    await waitUntil(async () => await input.evaluate((node) => document.activeElement === node),
+        "Expression field did not receive focus");
+    await input.pressSequentially("DEV*URB", { delay: 50 });
     await svg.locator('[data-venn-expression="DEV*URB"]').waitFor();
-    // At the initial small window size, the input must fit before the buttons.
+    assert(await input.evaluate((node) => document.activeElement === node),
+        "Typing lost focus during a diagram redraw");
+    // The input occupies its own row below all first-row controls.
     assert(await toolbar.evaluate((node) => {
         const input = node.querySelector("textarea").getBoundingClientRect();
         const controls = node.querySelector(".plot-dialog-window-controls").getBoundingClientRect();
-        return input.right <= controls.left;
-    }), "Custom expression input overlaps toolbar buttons");
+        const toolbar = node.getBoundingClientRect();
+        return input.top >= controls.bottom && input.right <= toolbar.right
+            && input.left >= toolbar.left && input.width >= toolbar.width - 24;
+    }), "Custom expression input does not fit in its own toolbar row");
+    await custom.click();
+    await input.waitFor({ state: "hidden" });
+    await waitUntil(async () => await toolbar.evaluate(() => innerHeight) === originalHeight,
+        "Unchecking Custom did not restore the dialog height");
+    assert.equal(await input.inputValue(), "DEV*URB");
+    assert.equal((await checkSquare(dialog)).width, original.width);
+    await custom.click();
+    await input.waitFor({ state: "visible" });
+    await svg.locator('[data-venn-expression="DEV*URB"]').waitFor();
+    assert.equal(await input.inputValue(), "DEV*URB");
     await dialog.getByRole("button", { name: "Reset", exact: true }).click();
     await custom.and(dialog.locator('[aria-checked="false"]')).waitFor();
     await input.waitFor({ state: "hidden" });
