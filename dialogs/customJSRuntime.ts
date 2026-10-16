@@ -271,7 +271,7 @@ export const extendCustomJSApi = async function(
     });
 
     register(QCA_EXTERNAL_CALLS.LIST_TRUTH_TABLES, async () => {
-        return await truthTables.load();
+        return await truthTables.load(true);
     });
 
     register(QCA_EXTERNAL_CALLS.INIT_CALIBRATE_DIALOG, async (parameters) => {

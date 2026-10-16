@@ -49,8 +49,8 @@ const normalizeTruthTableNames = function(value: unknown): string[] {
 export const createTruthTableAccess = function(options: TruthTableAccessOptions) {
     let cache: unknown[] | null = null;
 
-    const load = async function(): Promise<unknown[]> {
-        if (cache) {
+    const load = async function(refresh = false): Promise<unknown[]> {
+        if (cache && !refresh) {
             return cache;
         }
 

@@ -84,12 +84,21 @@ const refresh = () => {
   updateSyntax(buildCommand());
 };
 
+const loadTruthTables = async () => {
+  const tables = await callExternal('qca.listTruthTables') || [];
+  const names = Array.isArray(tables)
+    ? tables.map((item) => String(item?.name || '').trim()).filter(Boolean)
+    : [];
+  setValue(c_datasets, names);
+  if (names.length === 1) setSelected(c_datasets, [names[0]]);
+  selected_source = getSelected(c_datasets)[0] || '';
+  refresh();
+};
+
 enableSearch(c_datasets);
-setValue(c_datasets, listObjects('truthtables'));
 hide(object_name);
 assign_label_text = String(getValue(assign_label) || 'Assign');
-selected_source = getSelected(c_datasets)[0] || '';
-refresh();
+loadTruthTables();
 
 onChange(c_datasets, () => {
   clearError(c_datasets);
@@ -146,11 +155,9 @@ onClick(b_run, () => {
   run(buildCommand());
 });
 
-onClick(b_reset, () => {
+onClick(b_reset, async () => {
   resetDialog();
-  setValue(c_datasets, listObjects('truthtables'));
   hide(object_name);
-  selected_source = getSelected(c_datasets)[0] || '';
   result_name = '';
-  refresh();
+  await loadTruthTables();
 });
