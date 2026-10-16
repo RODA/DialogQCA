@@ -25,5 +25,6 @@ const run = function(script, args, cwd) {
 // Always compile and stage current sources; an old dist must not certify a fix.
 run(path.join(dialogForgeRoot, "scripts/build-desktop.js"), [], dialogForgeRoot);
 run(path.join(productRoot, "tests/electron/verify-DialogQCA-dialog-window.js"), [], productRoot);
+run(path.join(productRoot, "tests/verify-incoherent-dialog.js"), [], productRoot);
 run(path.join(productRoot, "tests/verify-venn-dialog.js"), [], productRoot);
 run(path.join(productRoot, "tests/verify-desktop-dialog-availability.js"), [], productRoot);
