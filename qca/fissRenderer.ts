@@ -122,7 +122,7 @@ export const renderFissChart = function(
     host.style.position = "relative";
 
     const renderToolbar = function(svg: SVGSVGElement | null): HTMLElement {
-        return createSvgPlotToolbar({
+        const toolbar = createSvgPlotToolbar({
             svg,
             title: payload.title,
             zoom: preview.zoom,
@@ -140,6 +140,14 @@ export const renderFissChart = function(
             windowTitle: options.windowTitle,
             windowLevel: Boolean(options.toolbarHost)
         });
+        toolbar.querySelector(".plot-dialog-window-title")?.remove();
+        const reset = toolbar.querySelector<HTMLButtonElement>(
+            ".plot-dialog-window-controls > button"
+        );
+        if (reset && options.reset) {
+            reset.title = "Restore default chart settings and 100% zoom";
+        }
+        return toolbar;
     };
 
     if (!payload.conditions.length || !payload.configurations.length) {

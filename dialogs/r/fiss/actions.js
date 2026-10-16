@@ -60,8 +60,8 @@ onChange(core_term_select, async () => {
   await syncFiss('core');
 });
 
+// Programmatic setValue also emits change; only typing makes a title explicit.
 onInput(title_input, () => syncFiss('title'));
-onChange(title_input, () => syncFiss('title'));
 onChange(legend_checkbox, () => syncFiss('legend'));
 onChange(labels_checkbox, () => syncFiss('labels'));
 

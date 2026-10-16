@@ -78,7 +78,17 @@ export const createFissDialogRuntime = function(options: {
             return;
         }
 
-        if (!sameStrings(options.api.getValue?.(name), values)) {
+        const node = options.api.getElementNode?.(name);
+        const select = node instanceof HTMLSelectElement
+            ? node
+            : node instanceof HTMLElement
+                ? node.querySelector("select")
+                : null;
+        const currentValues = select
+            ? Array.from(select.options, (option) => option.value)
+            : options.api.getValue?.(name);
+
+        if (!sameStrings(currentValues, values)) {
             options.api.setValue?.(name, values);
         }
 
@@ -102,6 +112,7 @@ export const createFissDialogRuntime = function(options: {
         }
     };
     let synchronizationGeneration = 0;
+    let automaticTitle = true;
     const apply = function(
         source: Record<string, unknown>,
         state: QcaFissDialogState,
@@ -192,6 +203,11 @@ export const createFissDialogRuntime = function(options: {
     const synchronize = async function(payload: unknown): Promise<QcaFissDialogState> {
         const source = asPayloadRecord(payload);
         const eventName = asString(source.event);
+        if (eventName === "init") {
+            automaticTitle = true;
+        } else if (eventName === "title") {
+            automaticTitle = value(source.titleInput).trim() === "";
+        }
         const generation = synchronizationGeneration + 1;
         synchronizationGeneration = generation;
         const state = normalizeQcaFissDialogState(await options.invoke(
@@ -202,7 +218,7 @@ export const createFissDialogRuntime = function(options: {
                 model: selected(source.modelSelect),
                 ambiguity: selected(source.ambiguitySelect),
                 coreSelections: asPayloadRecord(source.coreSelections),
-                title: value(source.titleInput),
+                title: automaticTitle ? "" : value(source.titleInput),
                 legend: options.api.isChecked?.(asString(source.legendCheckbox)) === true,
                 useLabels: eventName === "init" || eventName === "solution"
                     ? undefined
@@ -212,7 +228,7 @@ export const createFissDialogRuntime = function(options: {
 
         if (generation === synchronizationGeneration) {
             apply(source, state, {
-                preserveTitle: eventName !== "init"
+                preserveTitle: !automaticTitle
             });
         }
 

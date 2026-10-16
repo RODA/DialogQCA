@@ -3,7 +3,8 @@
     "scripts": {
         "start": "node scripts/start-product.js",
         "check": "node scripts/check-build-ownership.js && node scripts/check-product.js",
-        "test": "npm run check && npm run test:native-dataset-dialog",
+        "test": "npm run check && npm run test:fiss-commands && npm run test:native-dataset-dialog",
+        "test:fiss-commands": "R --vanilla --slave --file=tests/verify-fiss-commands.R",
         "test:native-dataset-dialog": "node scripts/test-native-dataset-dialog.js",
         "build": "node scripts/build-product.js",
         "check:build-ownership": "node scripts/check-build-ownership.js",

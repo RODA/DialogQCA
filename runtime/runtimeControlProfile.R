@@ -605,62 +605,89 @@ qca_fiss_condition_labels <- function(
 }
 
 
-qca_fiss_outcome_label <- function(object, chart) {
-    label <- as.character(chart$outcome.label %||% "")[[1L]]
-    if (nzchar(label)) return(label)
-
+qca_fiss_outcome_label <- function(
+    object, chart, use.labels = isTRUE(object$tt$options$use.labels)
+) {
     outcome <- as.character(chart$outcome %||% object$tt$options$outcome %||% "")[[1L]]
-    if (isTRUE(object$tt$options$use.labels)) {
+    negated <- isTRUE(chart$neg.out) || startsWith(outcome, "~")
+    outcome <- sub("^~", "", outcome)
+    if (use.labels) {
         categories <- as.character(
             (object$tt$categories %||% list())[[outcome]] %||% character(0)
         )
-        index <- if (isTRUE(chart$neg.out)) 1L else 2L
+        index <- if (negated) 1L else 2L
         if (length(categories) >= index && nzchar(categories[[index]])) {
             return(categories[[index]])
         }
     }
 
-    paste0(if (isTRUE(chart$neg.out)) "~" else "", outcome)
+    paste0(if (negated) "~" else "", outcome)
 }
 
 
 qca_fiss_plot_command <- function(
-    object_name, branch, model, chart, title, legend, labels
+    object_name, object, branch, model, chart, title, legend, labels
 ) {
     quote_r <- function(value) {
         encodeString(as.character(value), quote = "\"")
+    }
+    format_call <- function(name, arguments, compact = FALSE) {
+        single_line <- paste0(name, "(", paste(arguments, collapse = ", "), ")")
+        if (
+            (compact || length(arguments) == 1L) &&
+            !any(grepl("\n", arguments, fixed = TRUE)) &&
+            nchar(single_line) <= 75L
+        ) {
+            return(single_line)
+        }
+
+        paste0(
+            name, "(\n",
+            paste0("  ", gsub("\n", "\n  ", arguments, fixed = TRUE), collapse = ",\n"),
+            "\n)"
+        )
     }
     object_reference <- paste(
         deparse(as.name(object_name), width.cutoff = 500L),
         collapse = ""
     )
-    chart_args <- c(
-        object_reference,
-        paste0("branch = ", quote_r(branch)),
-        paste0("model = ", model)
-    )
-    ambiguous <- lengths(chart$candidates) > 1L
+    chart_args <- object_reference
 
-    if (any(ambiguous)) {
-        selected <- unname(chart$parsimonious)
-        chart_args <- c(
-            chart_args,
-            paste0(
-                "parsimonious = c(",
-                paste(vapply(selected, quote_r, character(1)), collapse = ", "),
-                ")"
-            )
-        )
+    # A NULL branch/model is automatic only when there is a single choice.
+    if (length(object$i.sol) > 1L) {
+        chart_args <- c(chart_args, paste0("branch = ", quote_r(branch)))
+    }
+    models <- object$i.sol[[branch]]$solution
+    if (is.list(models) && length(models) > 1L) {
+        chart_args <- c(chart_args, paste0("model = ", model))
     }
 
-    plot_args <- c(
-        paste0("fissChart(", paste(chart_args, collapse = ", "), ")"),
-        paste0("labels = c(", paste(vapply(labels, quote_r, character(1)), collapse = ", "), ")"),
-        paste0("main = ", quote_r(title)),
-        paste0("legend = ", if (legend) "TRUE" else "FALSE")
-    )
+    if (any(lengths(chart$candidates) > 1L)) {
+        selected <- vapply(unname(chart$parsimonious), quote_r, character(1))
+        chart_args <- c(chart_args, paste0(
+            "parsimonious = ", format_call("c", selected, compact = TRUE)
+        ))
+    }
 
-    paste0("plot(", paste(plot_args, collapse = ", "), ")")
+    plot_args <- format_call("fissChart", chart_args)
+    default_labels <- as.character(chart$condition.labels %||% rownames(chart$values))
+    if (!identical(as.character(labels), default_labels)) {
+        plot_args <- c(plot_args, paste0(
+            "labels = ", format_call("c", vapply(labels, quote_r, character(1)), compact = TRUE)
+        ))
+    }
+    default_title <- paste0(
+        "Configurations for ",
+        chart$outcome.label %||% paste0(if (isTRUE(chart$neg.out)) "~" else "", chart$outcome)
+    )
+    if (!identical(as.character(title), as.character(default_title))) {
+        plot_args <- c(plot_args, paste0("main = ", quote_r(title)))
+    }
+    if (!isTRUE(legend)) {
+        plot_args <- c(plot_args, "legend = FALSE")
+    }
+
+    format_call("plot", plot_args)
 }
 
 
@@ -831,16 +858,18 @@ qca_fiss_dialog_state <- function(params) {
     } else {
         ""
     }
-    title <- requested_title
-    if (!nzchar(trimws(title))) {
-        title <- paste0("Configurations for ", qca_fiss_outcome_label(object, chart))
-    }
-    legend <- isTRUE(params$legend)
     use_labels <- if (is.null(params$useLabels)) {
         isTRUE(object$tt$options$use.labels)
     } else {
         isTRUE(params$useLabels)
     }
+    title <- requested_title
+    if (!nzchar(trimws(title))) {
+        title <- paste0(
+            "Configurations for ", qca_fiss_outcome_label(object, chart, use_labels)
+        )
+    }
+    legend <- isTRUE(params$legend)
     condition_labels <- qca_fiss_condition_labels(object, chart, use_labels)
     configurations <- colnames(chart$values)
     configuration_labels <- as.character(seq_along(configurations))
@@ -858,6 +887,7 @@ qca_fiss_dialog_state <- function(params) {
     )
     command <- qca_fiss_plot_command(
         selected_solution,
+        object,
         selected_branch,
         model_index,
         chart,
