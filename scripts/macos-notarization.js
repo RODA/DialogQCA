@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 "use strict";
 
-const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -59,13 +58,13 @@ const resolveDialogForgeRoot = function() {
     ].filter(Boolean);
     const root = candidates.find((candidate) => {
         return fs.existsSync(path.join(candidate, "package.json"))
-            && fs.existsSync(path.join(candidate, "node_modules", "app-builder-bin"));
+            && fs.existsSync(path.join(candidate, "scripts", "updater-artifacts.js"));
     });
 
     if (!root) {
         fail(
-            "Could not find DialogForge with installed packaging dependencies. "
-            + "Set DIALOGFORGE_ROOT or install the sibling DialogForge checkout."
+            "Could not find DialogForge updater tooling. "
+            + "Set DIALOGFORGE_ROOT or update the sibling DialogForge checkout."
         );
     }
     return root;
@@ -169,66 +168,24 @@ const showRecentHistory = function(count) {
     });
 };
 
-const fileHash = function(filePath, algorithm, encoding) {
-    return crypto.createHash(algorithm).update(fs.readFileSync(filePath)).digest(encoding);
-};
-
-const rebuildUpdaterZip = function(appPath, channelPath) {
+const loadUpdaterTools = function() {
     const dialogForgeRoot = resolveDialogForgeRoot();
-    const yaml = require(path.join(dialogForgeRoot, "node_modules", "js-yaml"));
-    const { appBuilderPath } = require(
-        path.join(dialogForgeRoot, "node_modules", "app-builder-bin")
-    );
-    const outputDir = path.dirname(channelPath);
-    const latest = yaml.load(fs.readFileSync(channelPath, "utf8")) || {};
-    const files = Array.isArray(latest.files) ? latest.files : [];
-    const zipEntry = files.find((entry) => {
-        return /\.zip$/i.test(String((entry || {}).url || ""));
-    });
 
-    if (!zipEntry) {
-        fail(`No updater ZIP is listed in ${channelPath}.`);
-    }
-
-    const zipPath = path.join(outputDir, String(zipEntry.url));
-    const blockMapPath = `${zipPath}.blockmap`;
-    const temporaryZipPath = `${zipPath}.stapled`;
-    const temporaryBlockMapPath = `${blockMapPath}.stapled`;
-    fs.rmSync(temporaryZipPath, { force: true });
-    fs.rmSync(temporaryBlockMapPath, { force: true });
-
-    console.log(`Rebuilding ${path.basename(zipPath)} from the stapled application.`);
-    runCommand("ditto", [
-        "-c",
-        "-k",
-        "--sequesterRsrc",
-        "--keepParent",
-        appPath,
-        temporaryZipPath
-    ]);
-    runCommand(appBuilderPath, [
-        "blockmap",
-        "--input",
-        temporaryZipPath,
-        "--output",
-        temporaryBlockMapPath
-    ]);
-
-    fs.renameSync(temporaryZipPath, zipPath);
-    fs.renameSync(temporaryBlockMapPath, blockMapPath);
-
-    const sha512 = fileHash(zipPath, "sha512", "base64");
-    zipEntry.size = fs.statSync(zipPath).size;
-    zipEntry.sha512 = sha512;
-    latest.files = [zipEntry];
-    latest.path = String(zipEntry.url);
-    latest.sha512 = sha512;
-    fs.writeFileSync(channelPath, yaml.dump(latest, { lineWidth: -1, noRefs: true }));
+    return require(path.join(dialogForgeRoot, "scripts", "updater-artifacts"));
 };
 
-const staple = function() {
+const rebuildUpdaterZip = async function(appPath, channelPath) {
+    await loadUpdaterTools().rebuildMacUpdaterZip(appPath, channelPath);
+};
+
+const staple = async function() {
     const appPaths = productAppPaths();
     const dmgPaths = productDmgPaths();
+    const channelPaths = updateChannelMetadataPaths();
+
+    if (channelPaths.length > 0) {
+        loadUpdaterTools();
+    }
 
     appPaths.forEach((appPath) => {
         console.log(`Stapling ${appPath}`);
@@ -237,7 +194,7 @@ const staple = function() {
         runCommand("codesign", ["--verify", "--deep", "--strict", "--verbose=2", appPath]);
     });
 
-    updateChannelMetadataPaths().forEach((channelPath) => {
+    for (const channelPath of channelPaths) {
         const arch = archForChannelMetadata(channelPath);
         if (!arch) {
             fail(`Cannot determine the architecture for ${path.basename(channelPath)}.`);
@@ -246,8 +203,8 @@ const staple = function() {
         if (!appPath) {
             fail(`No ${arch} application is present for ${path.basename(channelPath)}.`);
         }
-        rebuildUpdaterZip(appPath, channelPath);
-    });
+        await rebuildUpdaterZip(appPath, channelPath);
+    }
 
     dmgPaths.forEach((dmgPath) => {
         console.log(`Stapling ${dmgPath}`);
@@ -256,7 +213,7 @@ const staple = function() {
     });
 };
 
-const main = function() {
+const main = async function() {
     requireMacOS();
     const action = String(process.argv[2] || "").trim();
 
@@ -273,7 +230,7 @@ const main = function() {
         return;
     }
     if (action === "staple") {
-        staple();
+        await staple();
         return;
     }
 
@@ -281,13 +238,11 @@ const main = function() {
 };
 
 if (require.main === module) {
-    try {
-        main();
-    } catch (error) {
+    main().catch((error) => {
         console.error("[macos-notarization] Failed.");
         console.error(error instanceof Error ? error.message : String(error));
-        process.exit(1);
-    }
+        process.exitCode = 1;
+    });
 }
 
 module.exports = { rebuildUpdaterZip };
